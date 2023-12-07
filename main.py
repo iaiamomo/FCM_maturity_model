@@ -74,6 +74,7 @@ def run_fcm(n_fcm, iterations, lambda_value, comp_type=1, fcm_type="aa"):
         ww.append(r_ww)
     ww.append([0] * (len(results_total) + 1))
     ww = np.array(ww)
+    np.savetxt(f'res_ww.csv', ww, delimiter=',', fmt='%d')
     al = np.genfromtxt(f'res_al.csv', delimiter=',')
 
     h = FCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)

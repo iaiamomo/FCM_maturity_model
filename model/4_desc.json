@@ -1,0 +1,13 @@
+{
+    "main": "WMS, TMS",
+    "nodes": {
+        "1": "IIoT",
+        "2": "Cloud Services",
+        "3": "AI, CV, PM, RPA",
+        "4": "Cyber Security",
+        "5": "Robotics",
+        "6": "AR, VR",
+        "7": "Digital Twin",
+        "8": "BI, Big Data"
+    }
+}

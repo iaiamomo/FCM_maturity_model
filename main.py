@@ -1,4 +1,4 @@
-from fcm import FCM_class
+from fcm import MLFCM_class
 import numpy as np
 import json
 
@@ -25,24 +25,7 @@ def print_results(initial_activation_levels, results_total):
         print(f"\t Final: {results_total[i]}")
 
 
-def static_execute(graph_list, iterations, lambda_value, fcm_type="aa"):
-    match fcm_type:
-        case "cyprus":
-            print("Cyprus")
-            graph_list = FCM_class.cyprus_fcm_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
-        case "kosko":
-            print("Kosko")
-            graph_list = FCM_class.kosko_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
-        case "stylios":
-            print("Stylios and Groumpos")
-            graph_list = FCM_class.stylios_groumpos_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
-        case _:
-            graph_list = None
-    return graph_list
-
-
 def run_fcm(n_fcm, iterations, lambda_value, comp_type=1, fcm_type="aa"):
-    # get all the files inside the subfolder and my_modeling folder using path
     graph_list = []
     for i in range(n_fcm):
         # get weights and activation levels from csv files 
@@ -50,26 +33,23 @@ def run_fcm(n_fcm, iterations, lambda_value, comp_type=1, fcm_type="aa"):
         al = np.genfromtxt(f'model/{i}_al_{comp_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'model/{i}_al.csv', delimiter=',')
 
         # create graph from weights and activation levels
-        h = FCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)
+        h = MLFCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)
 
         # get description of the graph
         desc = json.load(open(f'model/{i}_desc.json'))
         desc_main = desc['main']
         desc_nodes = desc['nodes']
-        #FCM_class.visualize(h, desc_main, desc_nodes)
+        #MLFCM_class.visualize(h, desc_main, desc_nodes)
 
         graph_list.append(h)
     
     # execute static analysis on the sub-fcms
-    graph_list_out = static_execute(graph_list, iterations, lambda_value, fcm_type)
+    graph_list_out, final_activation_level = MLFCM_class.static_execute(graph_list, iterations, lambda_value, fcm_type)
     assert graph_list_out is not None, "No algorithm selected"
 
     out_initial_al, out_final_al = extract_weights(graph_list_out)
     print_results(out_initial_al, out_final_al)
 
-    # extract the final activation level from the final graph
-    n_main_concept = len(graph_list[0].nodes)-1
-    final_activation_level = graph_list[0].nodes[n_main_concept]['attr_dict']['value'][-1]
     print("Final Activation Level:", final_activation_level)
 
 
@@ -80,4 +60,5 @@ if __name__ == "__main__":
     company_type = 1    # al file type of sub-fcms
     # cyprus, kosko, stylios
     fcm_algorithm = "cyprus"    # fcm algorithm to use
+    
     run_fcm(n_fcm, iterations, lambda_value, comp_type=company_type, fcm_type=fcm_algorithm)

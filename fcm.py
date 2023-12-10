@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from random import randint
 
-class FCM_class:
+class MLFCM_class:
 
     # visualize the graph
     def visualize(graph, desc_main, desc_nodes):
@@ -45,6 +45,28 @@ class FCM_class:
                 if (WW[i][j] != 0): G.add_edge(i, j, weight = round(WW[i][j], 5))
 
         return G
+
+
+    # execute the static analysis on the MLFCM
+    def static_execute(graph_list, iterations, lambda_value, fcm_type="cyprus"):
+        match fcm_type:
+            case "cyprus":
+                graph_list = MLFCM_class.cyprus_fcm_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
+            case "kosko":
+                graph_list = MLFCM_class.kosko_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
+            case "stylios":
+                graph_list = MLFCM_class.stylios_groumpos_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
+            case _:
+                graph_list = None
+
+        if graph_list is None:
+            return None, None
+
+        # extract the final activation level from the final graph
+        n_main_concept = len(graph_list[0].nodes)-1
+        final_activation_level = graph_list[0].nodes[n_main_concept]['attr_dict']['value'][-1]
+
+        return graph_list, final_activation_level
     
     
     # sigmoid function
@@ -64,7 +86,7 @@ class FCM_class:
                 if G.nodes[node]['attr_dict']['link'] > 0:
                     node_attr_links = int(G.nodes[node]['attr_dict']['link'])
                     graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM_class.cyprus_fcm_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
+                    graph_list = MLFCM_class.cyprus_fcm_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
                     G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
 
                 # contribution of the incoming edges
@@ -98,7 +120,7 @@ class FCM_class:
                 if b == 0:
                     final_al = G.nodes[node]['attr_dict']['value'][t-1]
                 else:
-                    final_al = round(FCM_class.sigmoid(x, lambda_value), 5) # A_i^t = sigmoid(x)
+                    final_al = round(MLFCM_class.sigmoid(x, lambda_value), 5) # A_i^t = sigmoid(x)
                 
                 G.nodes[node]['attr_dict']['value'][t] = final_al
             
@@ -119,7 +141,7 @@ class FCM_class:
                 if G.nodes[node]['attr_dict']['link'] > 0:
                     node_attr_links = int(G.nodes[node]['attr_dict']['link'])
                     graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM_class.kosko_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
+                    graph_list = MLFCM_class.kosko_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
                     G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
 
                 # contribution of the incoming edges of the node i (B_i^t)
@@ -133,7 +155,7 @@ class FCM_class:
                     
                     b += w_edge * other_attr[t-1]   # B_i^t = sum(w_ji * A_j^(t-1))
             
-                final_al = round(FCM_class.sigmoid(b, lambda_value), 5)  # A_i^t = sigmoid(B_i^t)
+                final_al = round(MLFCM_class.sigmoid(b, lambda_value), 5)  # A_i^t = sigmoid(B_i^t)
                 
                 G.nodes[node]['attr_dict']['value'][t] = final_al
                 
@@ -153,7 +175,7 @@ class FCM_class:
                 if G.nodes[node]['attr_dict']['link'] > 0:
                     node_attr_links = int(G.nodes[node]['attr_dict']['link'])
                     graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM_class.stylios_groumpos_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
+                    graph_list = MLFCM_class.stylios_groumpos_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
                     G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
 
                 # contribution of the incoming edges
@@ -169,7 +191,7 @@ class FCM_class:
 
                 b = b + al_node
             
-                final_al = round(FCM_class.sigmoid(b, lambda_value), 5)
+                final_al = round(MLFCM_class.sigmoid(b, lambda_value), 5)
                 
                 G.nodes[node]['attr_dict']['value'][t] = final_al
                 

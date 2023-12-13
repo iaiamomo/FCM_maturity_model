@@ -118,10 +118,8 @@ class Population(object):
                 x.genes[mutate_index] = np.random.randint(1,10)/10
 
 
+    # evolves the current population to the next generation
     def evolve(self):
-        """
-        Evolves curent population to the next generation 
-        """
         # 1. Selection
         self.Select()
         # 2. Crossover
@@ -144,13 +142,13 @@ class Algorithm(object):
         lambda_value = 0.9  # lambda value
         iterations = 25  # number of iterations
         company_type = 1    # al file type of sub-fcms
-        # cyprus, kosko, stylios
-        fcm_algorithm = "cyprus"    # fcm algorithm to use
+        model_type = 4  # model type
+        fcm_algorithm = "papageorgiou"    # cyprus, papageorgiou, kosko, stylios
     
         for i in range(n_fcm):
             # get weights and activation levels from csv files
-            ww = np.genfromtxt(f'model/{i}_wm.csv', delimiter=',')
-            al = np.genfromtxt(f'model/{i}_al_{company_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'model/{i}_al.csv', delimiter=',')
+            ww = np.genfromtxt(f'model{model_type}/{i}_wm.csv', delimiter=',')
+            al = np.genfromtxt(f'model{model_type}/{i}_al_{company_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'model/{i}_al.csv', delimiter=',')
 
             # modify activation levels based on genes
             g_index = 0

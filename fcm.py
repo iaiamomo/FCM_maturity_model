@@ -52,6 +52,8 @@ class MLFCM_class:
         match fcm_type:
             case "cyprus":
                 graph_list = MLFCM_class.cyprus_fcm_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
+            case "papageorgiou":
+                graph_list = MLFCM_class.papageorgiou_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
             case "kosko":
                 graph_list = MLFCM_class.kosko_alg_graph(graph_list, g_index=0, start_iter=1, end_iter=iterations+1, lambda_value=lambda_value)
             case "stylios":
@@ -106,13 +108,15 @@ class MLFCM_class:
                     # al_old = A_j^(t-1)
                     d_al = (al_new - al_old)    # delta A_j^t
                     
+                    # classic method
                     b += (w_edge * d_al)    # B_i^t = sum(w_ji * delta A_j^t)
                 
+                # contribution of the previous activation level
                 al_node = G.nodes[node]['attr_dict']['value'][t-1] # A_i^t
                 if al_node != 0:
                     c = (np.log((1-al_node)/al_node))/-lambda_value  # C_i^t = log((1-A_i^t)/A_i^t) / -lambda
                 else:
-                    c = 0
+                    c = 0   # to avoid having invalid values in the graph
                 
                 in_factor = 1.2
                 x = in_factor * b + c   # x = 1.2 * B_i^t + C_i^t
@@ -126,6 +130,42 @@ class MLFCM_class:
             
         graph_list[g_index] = G
 
+        return graph_list
+    
+
+    # algorithm from papageorgiou
+    def papageorgiou_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value):
+        G = graph_list[g_index]
+
+        for t in range(start_iter,end_iter):    #for each iteration
+            for node in G:  #for each node in the graph
+
+                # contribution of the linked node
+                # recursive call of the algorithm for the linked graph
+                if G.nodes[node]['attr_dict']['link'] > 0:
+                    node_attr_links = int(G.nodes[node]['attr_dict']['link'])
+                    graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
+                    graph_list = MLFCM_class.papageorgiou_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
+                    G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
+
+                # contribution of the incoming edges
+                b = 0
+                for edge in G.in_edges(node):
+                    other, _ = edge
+                    w_edge = G[other][node]['weight']
+                    other_attr = G.nodes[other]['attr_dict']['value']
+                    
+                    #first_value = 2 * other_attr[t-1] * w_edge  # 2 * A_j^(t-1) * w_ij
+                    second_value = 2 * other_attr[t-1] - 1  # 2 * A_j^(t-1) - 1
+                    b += w_edge * second_value   # B_i^t = sum(2 * A_j^(t-1) * w_ij * (2 * A_i^(t-1) - 1))
+
+                c = b + (2 * G.nodes[node]['attr_dict']['value'][t-1] -1)  # C_i^t = B_i^t + (2 * A_i^(t-1) - 1)
+
+                final_al = round(MLFCM_class.sigmoid(b, lambda_value), 5)  # A_i^t = sigmoid(B_i^t)
+
+                G.nodes[node]['attr_dict']['value'][t] = final_al
+        
+        graph_list[g_index] = G
         return graph_list
     
 

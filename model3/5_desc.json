@@ -1,7 +1,7 @@
 {
-    "main": "WMS, TMS",
+    "main": "MES",
     "nodes": {
-        "1": "WMS, TMS",
+        "1": "MES",
         "2": "IIoT",
         "3": "Cloud Services",
         "4": "AI, CV, PM, RPA",

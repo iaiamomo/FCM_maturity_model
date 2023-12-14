@@ -1,5 +1,6 @@
 {
     "main": "Industry 4.0",
+    "layer": 1,
     "nodes": {
         "1": "CAD, CAM, PLM",
         "2": "CRM",

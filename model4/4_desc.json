@@ -1,5 +1,6 @@
 {
     "main": "WMS, TMS",
+    "layer": 2,
     "nodes": {
         "1": "WMS, TMS",
         "2": "IIoT",

@@ -1,8 +1,9 @@
-from fcm import MLFCM_class
+from fcm import FCM_class
 import numpy as np
 import json
 import matplotlib.pyplot as plt
 import fuzzy
+
 
 def extract_weights(graph_list):
     initial_activation_levels = []
@@ -38,29 +39,34 @@ def print_results(initial_activation_levels, results_total):
         print(f"\t Final: {results_total[i]}")
 
 
-def run_fcm(n_fcm, iterations, lambda_value, model_type=1, comp_type=1, fcm_type="aa", flt=None, print_status=False):
-    print(f"Algorithm: {fcm_type}, Lambda: {lambda_value}, Iterations: {iterations}, Company Type: {comp_type}")
+def create_model(n_fcm, model_type=1, comp_type=1, iterations=25):
     graph_list = []
     desc_nodes_list = []
+    desc_graphs = []
     for i in range(n_fcm):
         # get weights and activation levels from csv files 
         ww = np.genfromtxt(f'model{model_type}/{i}_wm.csv', delimiter=',')
         al = np.genfromtxt(f'model{model_type}/{i}_al_{comp_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'model/{i}_al.csv', delimiter=',')
 
         # create graph from weights and activation levels
-        h = MLFCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)
+        h = FCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)
 
         # get description of the graph
-        desc = json.load(open(f'model/{i}_desc.json'))
+        desc = json.load(open(f'model{model_type}/{i}_desc.json'))
         desc_main = desc['main']
         desc_nodes = desc['nodes']
         desc_nodes_list.append(desc_nodes)
-        #MLFCM_class.visualize(h, desc_main, desc_nodes)
+        desc_graphs.append(desc)
+        #FCM_class.visualize(h, desc_main, desc_nodes)
 
         graph_list.append(h)
-    
-    # execute static analysis on the sub-fcms
-    graph_list_out, final_activation_level = MLFCM_class.static_execute(graph_list, iterations, lambda_value, fcm_type)
+
+    return graph_list, desc_nodes_list, desc_graphs
+
+
+def run_fcm(model, iterations, lambda_value, fcm_type="aa", flt=None):    
+    # execute analysis of the FCM
+    graph_list_out, final_activation_level = FCM_class.fcm_evaluate(model, iterations, lambda_value, fcm_type)
     assert graph_list_out is not None, "No algorithm selected"
 
     out_initial_al, out_final_al = extract_weights(graph_list_out)
@@ -68,9 +74,6 @@ def run_fcm(n_fcm, iterations, lambda_value, model_type=1, comp_type=1, fcm_type
 
     ling_term = flt.get_linguisitic_term(final_activation_level)
     print("Final Activation Level:", final_activation_level, "(", ling_term, ")")
-
-    if print_status:
-        print_weights_nodes(graph_list_out, desc_nodes_list)
 
     return graph_list_out, final_activation_level
 
@@ -90,7 +93,8 @@ def plot_al_value(graph_list):
     plt.grid(True)
     plt.show(block=False)
 
-def plot_al_values_graphs(graphs, companies):
+
+def plot_al_values_graphs(graphs, companies, colors):
     if type(graphs) is not dict:
         for i in range(len(companies)):
             G = graphs[i][0]
@@ -134,7 +138,7 @@ def plot_al_values_graphs(graphs, companies):
             plt.subplot(1, len(companies), i+1)
             plt.grid(True)
             for j in range(len(values_x)):
-                plt.plot(range(values_x[j]), all_y[i][j], label=f"lambda {lambdas[j]}")
+                plt.plot(range(values_x[j]), all_y[i][j], color=colors[j], label=f"lambda {lambdas[j]}")
             plt.ylim(0, 1)
             plt.legend()
             plt.xlabel("Iterations")
@@ -147,20 +151,31 @@ def plot_al_values_graphs(graphs, companies):
 def plot_sigmoid(lambda_values):
     plt.figure(figsize=(8, 6))
 
-    x = np.linspace(-10, 10, 100)
-    for lambda_value in lambda_values:
+    '''colors = []
+    for i in range(len(lambda_values)):
+        colors.append('#%06X' % randint(0, 0xFFFFFF))'''
+
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    colors = colors[:len(lambda_values)]
+
+    x = np.linspace(-5, 5, 100)
+    for i in range(len(lambda_values)):
+        lambda_value = lambda_values[i]
         y = []
-        for i in x:
-            y.append(MLFCM_class.sigmoid(i, lambda_value))
-        plt.plot(x, y, label=f'lambda = {lambda_value}')
+        for j in x:
+            y.append(FCM_class.sigmoid(j, lambda_value))
+        plt.plot(x, y, color=colors[i], label=f'lambda = {lambda_value}')
+        plt.axvline(x=-lambda_value, linestyle='--', color=colors[i])
+        plt.axvline(x=lambda_value, linestyle='--', color=colors[i])
 
     plt.title(f'Sigmoid Function')
     plt.xlabel('x')
     plt.ylabel('Sigmoid(x)')
-    plt.axhline(y=0.5, color='red', linestyle='--', label='y=0.5')
     plt.legend()
     plt.grid(True)
     plt.show(block=False)
+
+    return colors
 
 
 if __name__ == "__main__":
@@ -168,20 +183,20 @@ if __name__ == "__main__":
     flt.plot_triangle()
 
     n_fcm = 6   # number of sub-fcms
-    iterations = 100  # number of iterations
-    #model -> modello originale e archi [0, 0.1, 0.5, 1]
-    #model2 -> pesi delle tecnologie sul sistema = 1/n_tecnologie e archi [0, 0.2, 0.5, 0.8]
-    #model3 -> pesi delle tecnologie sul sistema = 1 e archi [0, 0.2, 0.5, 0.8]
-    #model4 -> modello rivisto e archi [0, 0.2, 0.5, 0.8]
+    iterations = 25  # number of iterations
+    #model -> modello originale e archi 0, 0.1, 0.5, 1
+    #model2 -> pesi delle tecnologie sul sistema = 1/n_tecnologie e archi 0, 0.2, 0.5, 0.8
+    #model3 -> pesi delle tecnologie sul sistema = 1 e archi 0, 0.2, 0.5, 0.8
+    #model4 -> modello rivisto, pesi delle tecnologie sul sistem = 1/n_tecnologie e archi -0.8, -0.5, -0.2, 0, 0.2, 0.5, 0.8
     model_type = 4  # model type
-    fcm_algorithm = "papageorgiou"    # cyprus, papageorgiou, kosko, stylios
+    fcm_algorithm = "papageorgiou"    # christoforou, papageorgiou, kosko, stylios
     print_status = False    # print status of the sub-fcms
 
     #lambda determina quanto il modello è sensibile ai cambiamenti dei AL
     #lamda grande -> più sensibile ai cambiamenti, tende a 0 o 1
     #lamda piccolo -> meno sensibile ai cambiamenti, tende a 0.5
-    lambdas = [0.1, 0.8, 2, 2.5, 3, 3.5]
-    plot_sigmoid(lambdas)
+    lambdas = [0.1, 0.8, 2, 2.5, 3, 3.5, 5]
+    colors = plot_sigmoid(lambdas)
 
     #company_type 1 -> AL 0.1
     #company_type 2 -> AL misti
@@ -193,10 +208,13 @@ if __name__ == "__main__":
     for lambda_value in lambdas:
         graphs = []
         for c in companies:
-            print(f"COMPANY {c}")
-            graph_list_out, final_activation_level = run_fcm(n_fcm, iterations, lambda_value, model_type=model_type, comp_type=c, fcm_type=fcm_algorithm, flt=flt, print_status=print_status)
+            print(f"Algorithm: {fcm_algorithm}, Lambda: {lambda_value}, Iterations: {iterations}, Company Type: {c}")
+            model, desc_nodes_list, desc_graphs = create_model(n_fcm, model_type=model_type, comp_type=c, iterations=iterations)
+            graph_list_out, final_activation_level = run_fcm(model, iterations, lambda_value, fcm_type=fcm_algorithm, flt=flt)
+            if print_status:
+                print_weights_nodes(graph_list_out, desc_nodes_list)
             graphs.append(graph_list_out)
             print("\n")
         res[str(lambda_value)] = graphs
-    plot_al_values_graphs(res, companies)
+    plot_al_values_graphs(res, companies, colors)
     plt.show()

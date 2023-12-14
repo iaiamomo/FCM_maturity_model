@@ -1,5 +1,6 @@
 {
     "main": "ERP, SCM",
+    "layer": 2,
     "nodes": {
         "1": "ERP, SCM",
         "2": "Cloud Services",

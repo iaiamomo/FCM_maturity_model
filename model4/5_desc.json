@@ -1,5 +1,6 @@
 {
     "main": "MES",
+    "layer": 2,
     "nodes": {
         "1": "MES",
         "2": "IIoT",

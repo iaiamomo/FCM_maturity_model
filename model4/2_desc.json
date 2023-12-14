@@ -1,5 +1,6 @@
 {
     "main": "CRM",
+    "layer": 2,
     "nodes": {
         "1": "CRM",
         "2": "IIoT",

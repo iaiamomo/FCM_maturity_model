@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-from fcm import MLFCM_class
+from fcm import FCM_class
 import glob
 
 # class representing an individual in the population
-# in this case an individual is a MLFCM (activation levels of the nodes)
+# in this case an individual is a FCM (activation levels of the nodes)
 class Individual(object):
 
     def __init__(self, genes=None, individual_size = 20, target_val=0.6, individual_id = None):
@@ -26,14 +26,14 @@ class Individual(object):
     # Fitness is the difference between target value and the calculated value
     def fitness(self, run=False):
         if run==True:
-            self.algoritithm = Algorithm(genes=self.genes)  # run the MLFCM algorithm
+            self.algoritithm = Algorithm(genes=self.genes)  # run the FCM algorithm
             computed_objective = self.algoritithm.result
             self.fitness_val = round(abs(self.target_val - computed_objective), 3)
         return self.fitness_val
 
 
 # class representing the population
-# in this case the population is an evolving set of individuals (MLFCMs with different activation levels)
+# in this case the population is an evolving set of individuals (FCMs with different activation levels)
 class Population(object):
 
     def __init__(self, pop_size=10, mutate_prob=0.01, retain=5, target_val=0.6, individual_size = 30):
@@ -56,13 +56,13 @@ class Population(object):
     def grade(self, generation=None):
         fitness_sum = 0
         for x in self.individuals:
-            fitness_sum += x.fitness(run=True)  # run the MLFCM algorithm
+            fitness_sum += x.fitness(run=True)  # run the FCM algorithm
         
         pop_fitness = round(fitness_sum / self.pop_size, 3)
         self.fitness_history.append(pop_fitness)
 
         # sort individuals by fitness (lower fitness it better in this case)
-        self.individuals = sorted(self.individuals, key=lambda x: x.fitness())  # here x.fitness() does not run the MLFCM algorithm
+        self.individuals = sorted(self.individuals, key=lambda x: x.fitness())  # here x.fitness() does not run the FCM algorithm
         # set done to True if the target value is reached or if the fitness is too low
         if pop_fitness < 0.02 or self.individuals[0].fitness_val==0:
             #pop_fitness = 0
@@ -89,7 +89,7 @@ class Population(object):
             pick = random.uniform(0, max_fitness)
             current = 0
             for unfit in unfittest:
-                current += unfit.fitness()  # here unfit.fitness() does not run the MLFCM algorithm
+                current += unfit.fitness()  # here unfit.fitness() does not run the FCM algorithm
                 if current < pick:
                     self.parents.append(unfit)
                     break
@@ -133,17 +133,17 @@ class Population(object):
         self.elit = []
 
 
-# class representing the MLFCM algorithm
+# class representing the FCM algorithm
 class Algorithm(object):
     
     def __init__(self, genes=[]):
         graph_list = []
         n_fcm = 6   # number of sub-fcms
-        lambda_value = 0.9  # lambda value
+        lambda_value = 2  # lambda value
         iterations = 25  # number of iterations
         company_type = 1    # al file type of sub-fcms
         model_type = 4  # model type
-        fcm_algorithm = "papageorgiou"    # cyprus, papageorgiou, kosko, stylios
+        fcm_algorithm = "papageorgiou"    # christoforou, papageorgiou, kosko, stylios
     
         for i in range(n_fcm):
             # get weights and activation levels from csv files
@@ -156,10 +156,10 @@ class Algorithm(object):
                 al[x][0] = genes[g_index]
                 g_index+=1
 
-            h = MLFCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)
+            h = FCM_class.fcm_from_matrix_to_graph(ww, al, 0, iterations+1)
             graph_list.append(h)
     
-        graph_list, final_activation_level = MLFCM_class.static_execute(graph_list, iterations, lambda_value, fcm_algorithm)
+        graph_list, final_activation_level = FCM_class.fcm_evaluate(graph_list, iterations, lambda_value, fcm_algorithm)
         self.result = final_activation_level
         #self.result.append(abs(graph_list[0].nodes[11]['attr_dict']['value'][iterations]-0.9))
         #self.result.append(abs(graph_list[0].nodes[6]['attr_dict']['value'][iterations]-0.7))
@@ -167,7 +167,7 @@ class Algorithm(object):
 
 class ALGE_class():
 
-    # compute the number of genes in the MLFCM
+    # compute the number of genes in the FCM
     def compute_individual_size():
         individual_size = 0
         files = glob.glob("model/*_wm.csv")
@@ -181,8 +181,8 @@ class ALGE_class():
         return individual_size
     
 
-    # execute the dynamic analysis on the MLFCM
-    def dynamic_execute(n_runs, pop_size, generation, mutate_prob, retain, target_val):
+    # execute the what-if analysis of the FCM
+    def what_if(n_runs, pop_size, generation, mutate_prob, retain, target_val):
         # FCM parameters    
         individual_size = ALGE_class.compute_individual_size()
 
@@ -227,7 +227,7 @@ class ALGE_class():
 if __name__ == "__main__":
     # genetic algorithm parameters
     n_runs = 5  # number of simulations
-    pop_size = 50   # number of individuals (MLFCM) in the population
+    pop_size = 50   # number of individuals (FCM) in the population
     generation = 250    # number of generations
     mutate_prob = 0.1   # probability of mutation
     retain = 5  # percentage of fittest individuals to be kept as parents for next generation (elitist selection)
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     # target concept value
     target_val = 0.9
     
-    results, results_pop, results_gen = ALGE_class.dynamic_execute(n_runs, pop_size, generation, mutate_prob, retain, target_val)
+    results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, mutate_prob, retain, target_val)
 
     # visualize the results
     ALGE_class.visualize(results, results_pop, results_gen, target_val)

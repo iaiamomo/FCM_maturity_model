@@ -48,6 +48,7 @@ class Fuzzy_Linguistic_Terms:
         return None
 
 
+# activation level linguistic terms
 def define_al_fuzzy():
     range_values = np.arange(0, 1.1, 0.1)
     # 0.1, 0.3, 0.5, 0.7, 0.9
@@ -57,6 +58,22 @@ def define_al_fuzzy():
                         'M':    [0.3, 0.5, 0.7],
                         'H':    [0.5, 0.7, 0.9],
                         'VH':   [0.7, 0.9, 1.1]
+                        }
+    flt = Fuzzy_Linguistic_Terms(range_values, linguistic_terms)
+    return flt
+
+# weight matrix linguistic terms
+def define_wm_fuzzy():
+    range_values = np.arange(-1.1, 1.1, 0.1)
+    # -0.8, -0.5, -0.2, 0, 0.2, 0.5, 0.8
+    linguistic_terms = {
+                        'NH':   [-1.1, -0.8, -0.5],
+                        'NM':   [-0.8, -0.5, -0.2],
+                        'NL':   [-0.5, -0.2, 0],
+                        'NA':   [-0.2, 0, 0.2],
+                        'PL':   [0, 0.2, 0.5],
+                        'PM':   [0.2, 0.5, 0.8],
+                        'PH':   [0.5, 0.8, 1.1]
                         }
     flt = Fuzzy_Linguistic_Terms(range_values, linguistic_terms)
     return flt

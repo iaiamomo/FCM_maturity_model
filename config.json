@@ -1,0 +1,8 @@
+{
+    "n_fcm": 6,
+    "iterations": 100,
+    "model_type": 5,
+    "fcm_algorithm": "papageorgiou",
+    "lambda": 0.8,
+    "company": 4
+}

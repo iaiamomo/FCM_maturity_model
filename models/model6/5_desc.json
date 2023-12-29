@@ -1,0 +1,14 @@
+{
+    "main": "MES",
+    "nodes": {
+        "1": "MES",
+        "2": "IIoT",
+        "3": "Cloud Services",
+        "4": "AI, CV, PM, RPA",
+        "5": "Cyber Security",
+        "6": "Robotics",
+        "7": "AR, VR",
+        "8": "Digital Twin",
+        "9": "BI, Big Data"
+    }
+}

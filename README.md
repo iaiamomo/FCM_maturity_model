@@ -1,5 +1,41 @@
 # FCM-based Maturity Model for Industry 4.0
 
+## Preliminaries
+We assume the user has **Python 3.10** installed
+
+1. Download the repository
+    ```shell
+    git clone https://github.com/iaiamomo/FCM_maturity_model.git
+    ```
+
+- Install the Python packages
+    ```shell
+    pip install -r requirements.txt
+    ```
+
+## Run the code
+
+- Define the activation levels (AL) of each technologies (nodes) inside the [models](models) folder. [Model](#model) describe how to define the ALs.
+
+    **NOTE:** Please use [model5](models/model5/).
+
+- Define the characteristics of the defined FCM into the configuration file [config.json](config.json)
+
+- Run static analyses of the FCM
+    ```shell
+    python SA_class.py
+    ```
+
+- Run the FCM
+    ```shell
+    python FCM_class.py
+    ```
+
+- Run what-if analyses
+    ```shell
+    python GA_class.py
+    ```
+
 ## Model
 
 0. Define the main $(index = 0)$ FCM.

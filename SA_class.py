@@ -9,9 +9,6 @@ Complexity
 Strength
     weight and number of incoming edges (in-value, in-degree)
     weight and number of outgoing edges (out-value, out-degree)
-Tendency
-    number of feedback cycles in the graph (positive and negative)
-    number of cycles in which each node takes part
 '''
 
 class StaticAnalysis:
@@ -22,106 +19,105 @@ class StaticAnalysis:
 
 
     def get_complexity(self):
-        n_graphs = len(self.model)
+        self.n_graphs = len(self.model)
+        
+        self.layer = {}    # layer = FCM level
+        self.depth = 0
+        for i in range(self.n_graphs):
+            self.layer[i] = self.description[i]['layer'] 
+            if self.layer[i] > self.depth:
+                self.depth = self.layer[i]
 
-        layer = {}    # layer = FCM level
-        depth = 0
-        for i in range(n_graphs):
-            layer[i] = self.description[i]['layer'] 
-            if layer[i] > depth:
-                depth = layer[i]
+        self.density = {}    # density = n_edges / n_nodes
+        for i in range(self.n_graphs):
+            self.density[i] = round(nx.density(self.model[i]), 2)
 
-        density = {}    # density = n_edges / n_nodes
-        for i in range(n_graphs):
-            density[i] = round(nx.density(self.model[i]), 2)
+        self.n_nodes = {}    # n_nodes = number of nodes
+        for i in range(self.n_graphs):
+            self.n_nodes[i] = len(self.model[i].nodes)
 
-        n_nodes = {}    # n_nodes = number of nodes
-        for i in range(n_graphs):
-            n_nodes[i] = len(self.model[i].nodes)
-
-        return n_graphs, depth, layer, density, n_nodes
+        return self.n_graphs, self.depth, self.layer, self.density, self.n_nodes
 
 
     def get_strenght(self):
         n_graphs = len(self.model)
 
-        degrees = {}
-        values = {}
+        self.degrees = {}
+        self.values = {}
         for i in range(n_graphs):
             G : nx.DiGraph = self.model[i]
-            degrees[i] = G.degree()
-            values[i] = G.degree(weight='weight')
+            self.degrees[i] = G.degree()
+            self.values[i] = G.degree(weight='weight')
             new_values = []
-            for elem in values[i]:
+            for elem in self.values[i]:
                 elem = list(elem)
                 new_values.append((elem[0], round(elem[1], 2)))
-            values[i] = new_values
+            self.values[i] = new_values
 
-        return degrees, values
+        return self.degrees, self.values
     
+    def find_most_important_nodes(self):
+        self.imp_degree = {}
+        self.imp_value = {}
 
-    def get_tendency(self):
-        n_graphs = len(self.model)
+        print(len(self.description))
 
-        cycles = {}
-        pos_cycles = {}
-        neg_cycles = {}
-        for i in range(n_graphs):
-            G : nx.DiGraph = self.model[i]
-            cycl = list(nx.simple_cycles(G))
-            cycles[i] = cycl
-            pos_cycles[i] = 0
-            neg_cycles[i] = 0
-            for cycle in cycl:
-                product = 1.0
-                for j in range(len(cycle)):
-                    u = cycle[j]
-                    v = cycle[(j + 1) % len(cycle)]  # To loop back to the first node
-                    edge_weight = G[u][v]['weight']
-                    product *= edge_weight
-                
-                if product > 0:
-                    pos_cycles[i] += 1
-                elif product < 0:
-                    pos_cycles[i] += 1
+        for i in range(self.n_graphs):
+            sorted_degree = sorted(self.degrees[i], key=lambda x: x[1], reverse=True)
+            idx_deg = sorted_degree[0][0]
+            value_deg = sorted_degree[0][1]
+            if idx_deg == 0:
+                idx_deg = sorted_degree[1][0]
+                value_deg = sorted_degree[1][1]
+            idx_deg += 1
+            name_idx_deg = self.description[i]['nodes'][str(idx_deg)]
+            self.imp_degree[i] = (idx_deg, name_idx_deg, value_deg)
 
-        return cycles, pos_cycles, neg_cycles
+            sorted_val = sorted(self.values[i], key=lambda x: x[1], reverse=True)
+            idx_val = sorted_val[0][0]
+            value_val = sorted_val[0][1]
+            if idx_val == 0:
+                idx_val = sorted_val[1][0]
+                value_val = sorted_val[1][1]
+            idx_val += 1
+            name_idx_val = self.description[i]['nodes'][str(idx_val)]
+            self.imp_value[i] = (idx_val, name_idx_val, value_val)
+
+        return self.imp_degree, self.imp_value
+
     
-
-def print_dict(d):
-    for i in d:
-        print(f"\tFCM {i}: {d[i]}")
-
-def print_cycles(cycles, pos_cycles, neg_cycles):
-    for i in cycles:
-        print(f"\tFCM {i}: {len(cycles[i])}, {pos_cycles[i]} positive, {neg_cycles[i]} negative")
+    def print_dict(self, d):
+        for i in d:
+            print(f"\tFCM {i} - {self.description[i]['main']}: {d[i]}")
         
 
 if __name__ == "__main__":
     n_fcm = 6
-    model_type = 4
-    c = 1
+    model_type = 5
+    c = 4
     iterations = 25
     fcm_obj = FCM(n_fcm, iterations, model_type, c)
 
     sa = StaticAnalysis(fcm_obj.model, fcm_obj.desc_graphs)
 
-    n_graphs, depth, layer, density, n_nodes = sa.get_complexity()
-    print(f"Number of graphs: {n_graphs}")
-    print(f"Depth: {depth}")
+    sa.get_complexity()
+    print(f"Number of graphs: {sa.n_graphs}")
+    print(f"Depth: {sa.depth}")
     print(f"FCM Layers:")
-    print_dict(layer)
+    sa.print_dict(sa.layer)
     print(f"Density - how many connections exists wrt the maximum possible number of connections")
-    print_dict(density)
+    sa.print_dict(sa.density)
     print(f"Number of nodes per FCM:")
-    print_dict(n_nodes)
+    sa.print_dict(sa.n_nodes)
 
-    degrees, values = sa.get_strenght()
+    sa.get_strenght()
     print(f"Nodes degree - number of incoming/outgoing edges per node per FCM")
-    print_dict(degrees)
+    sa.print_dict(sa.degrees)
     print(f"Nodes values - weight of incoming/outgoing edges per node per FCM")
-    print_dict(values)
+    sa.print_dict(sa.values)
 
-    cycles, pos_cycles, neg_cycles = sa.get_tendency()
-    print(f"Number of cycles per FCM:")
-    print_cycles(cycles, pos_cycles, neg_cycles)
+    sa.find_most_important_nodes()
+    print(f"Most important nodes per FCM (degree)")
+    sa.print_dict(sa.imp_degree)
+    print(f"Most important nodes per FCM (value)")
+    sa.print_dict(sa.imp_value)

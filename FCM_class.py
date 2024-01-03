@@ -21,7 +21,7 @@ class FCM:
         for i in range(self.n_fcm):
             # get weights and activation levels from csv files 
             ww = np.genfromtxt(f'models/model{model_type}/{i}_wm.csv', delimiter=',')
-            al = np.genfromtxt(f'models/model{model_type}/{i}_al_{company_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'model{model_type}/{i}_al.csv', delimiter=',')
+            al = np.genfromtxt(f'models/model{model_type}/{i}_al_{company_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'models/model{model_type}/{i}_al.csv', delimiter=',')
 
             if len(new_values) > 0:
                 # modify activation levels based on genes
@@ -34,7 +34,7 @@ class FCM:
             h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1)
 
             # get description of the graph
-            desc = json.load(open(f'model{model_type}/{i}_desc.json'))
+            desc = json.load(open(f'models/model{model_type}/{i}_desc.json'))
             desc_main = desc['main']
             desc_nodes = desc['nodes']
             desc_nodes_list.append(desc_nodes)

@@ -1,0 +1,14 @@
+{
+    "main": "CAD, CAM, PLM",
+    "nodes": {
+        "1": "CAD, CAM, PLM",
+        "2": "IIoT",
+        "3": "Cloud Services",
+        "4": "AI, CV, PM, RPA",
+        "5": "Cyber Security",
+        "6": "AR, VR",
+        "7": "Digital Twin",
+        "8": "DM, BI"
+    },
+    "layer": 2
+}

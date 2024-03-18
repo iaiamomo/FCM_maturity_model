@@ -25,7 +25,7 @@ class Individual(object):
 
     # Returns fitness of individual
     # Fitness is the difference between target value and the calculated value
-    def fitness(self, run=False):
+    def fitness(self, run=False, generation=None):
         if run==True:
             self.algoritithm = Algorithm(genes=self.genes)  # run the FCM algorithm
             computed_objective = self.algoritithm.result
@@ -58,7 +58,7 @@ class Population(object):
     def grade(self, generation=None):
         fitness_sum = 0
         for x in self.individuals:
-            fitness_sum += x.fitness(run=True)  # run the FCM algorithm
+            fitness_sum += x.fitness(run=True, generation=generation)  # run the FCM algorithm
         fitness_sum = round(fitness_sum, 3)
         
         pop_fitness = round(fitness_sum / self.pop_size, 3)
@@ -210,8 +210,8 @@ class ALGE_class():
             plt.xlabel('Generations')
             plt.xlim(0, gen_)
             plt.ylim(0.0, 0.3)
-            plt.title(f'Target Value: {target_val}')
-            plt.show()
+            plt.title(f'Target Value: {target_val}, Run: {i}')
+            plt.show(block=False)
 
 
 if __name__ == "__main__":
@@ -226,6 +226,11 @@ if __name__ == "__main__":
     target_val = 0.6
     
     results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, mutate_prob, retain, target_val)
+
+    # from the results_pop array, get the best individual
+    best_individuals = []
+    for pop in results_pop:
+        best_individuals.append(pop.individuals[0])
 
     # visualize the results
     ALGE_class.visualize(results, results_pop, results_gen, target_val)

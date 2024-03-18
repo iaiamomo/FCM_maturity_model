@@ -35,19 +35,33 @@ class Fuzzy_Linguistic_Terms:
     def plot_triangle(self):
         assert self.mfs is not None
 
-        plt.figure(figsize = (10, 5))
+        #plt.figure(figsize = (10, 5))
+        plt.figure()
         axes = plt.axes()
 
         for i in self.mfs:
-            axes.plot(self.range_values, self.mfs[i], linewidth=0.4, label=str(i))
+            axes.plot(self.range_values, self.mfs[i], linewidth=0.5, label=str(i))
             axes.fill_between(self.range_values, self.mfs[i], alpha=0.5)
 
-        axes.legend(bbox_to_anchor=(0.95, 0.6))
+        #axes.legend(bbox_to_anchor=(0.95, 0.6))
+        axes.legend(loc='lower left')
 
         axes.spines['top'].set_visible(False)
         axes.spines['right'].set_visible(False)
-        axes.get_xaxis().tick_bottom()
-        axes.get_yaxis().tick_left()
+        #axes.get_xaxis().tick_bottom()
+        #axes.get_yaxis().tick_left()
+        #set x tick value
+        values = []
+        for key in self.linguistic_terms.keys():
+            values.append(self.linguistic_terms[key][1])
+        if 1.0 not in values:
+            values.append(1.0)
+        plt.xticks(values)
+
+        plt.xlabel('Value')
+        plt.ylabel('Membership')
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
         plt.tight_layout()
         plt.show(block=False)
 
@@ -91,6 +105,10 @@ def define_wm_fuzzy():
 
 
 if __name__ == "__main__":
+    flt = define_wm_fuzzy()
+    flt.plot_triangle()
+    plt.show(block=False)
+
     flt = define_al_fuzzy()
     flt.plot_triangle()
-    plt.show(block=True)
+    plt.show()

@@ -7,21 +7,21 @@ import copy
 
 class FCM:
 
-    def __init__(self, n_fcm, iterations, model_type, company_type, new_values=[]):
+    def __init__(self, n_fcm, iterations, company_type, new_values=[]):
         self.n_fcm = n_fcm
         self.iterations = iterations
-        self.model : list[nx.DiGraph] = self.build_model(model_type, company_type, new_values)
+        self.model : list[nx.DiGraph] = self.build_model(company_type, new_values)
 
 
-    def build_model(self, model_type, company_type, new_values=[]):
+    def build_model(self, company_type, new_values=[]):
         "Build the FCM model"
         graph_list = []
         desc_nodes_list = []
         self.desc_graphs = []
         for i in range(self.n_fcm):
             # get weights and activation levels from csv files 
-            ww = np.genfromtxt(f'models/model{model_type}/{i}_wm.csv', delimiter=',')
-            al = np.genfromtxt(f'models/model{model_type}/{i}_al_{company_type}.csv', delimiter=',') if i != 0 else np.genfromtxt(f'models/model{model_type}/{i}_al.csv', delimiter=',')
+            ww = np.genfromtxt(f'model/{i}_wm.csv', delimiter=',')
+            al = np.genfromtxt(f'cases/{company_type}/{i}_al.csv', delimiter=',')
 
             if len(new_values) > 0:
                 # modify activation levels based on genes
@@ -34,7 +34,7 @@ class FCM:
             h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1)
 
             # get description of the graph
-            desc = json.load(open(f'models/model{model_type}/{i}_desc.json'))
+            desc = json.load(open(f'model/{i}_desc.json'))
             desc_main = desc['main']
             desc_nodes = desc['nodes']
             desc_nodes_list.append(desc_nodes)
@@ -176,7 +176,6 @@ class FCM:
 
         for t in range(start_iter,end_iter):    #for each iteration
             for node in G:  #for each node in the graph
-
                 # contribution of the linked node
                 # recursive call of the algorithm for the linked graph
                 if G.nodes[node]['attr_dict']['link'] > 0:
@@ -369,7 +368,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors):
                 all_y[i] = []
             all_x[i].append(x_values)
             all_y[i].append(y_values)
-    
+
     plt.figure(figsize=(10, 5))
     lambdas = list(fcms.keys())
     for i in range(len(companies)):
@@ -415,7 +414,6 @@ def plot_sigmoid(lambda_values):
 
 import FLT_class
 if __name__ == "__main__":
-    config = json.load(open("config.json"))
     
     flt = FLT_class.define_al_fuzzy()
     flt.plot_triangle()
@@ -425,12 +423,6 @@ if __name__ == "__main__":
 
     n_fcm = 6   # number of sub-fcms
     iterations = 100  # number of iterations
-    #model -> modello originale e archi 0, 0.1, 0.5, 1
-    #model2 -> pesi delle tecnologie sul sistema = 1/n_tecnologie e archi 0, 0.2, 0.5, 0.8
-    #model3 -> pesi delle tecnologie sul sistema = 0.8 e archi 0, 0.2, 0.5, 0.8
-    #model4 -> modello rivisto, pesi delle tecnologie sul sistem = 1/n_tecnologie e archi -0.8, -0.5, -0.2, 0, 0.2, 0.5, 0.8
-    #model5 -> pesi positivi, archi ad H, 0, 0.25, 0.5, 0.75
-    model_type = 5  # model type
     fcm_algorithm = "papageorgiou"    # christoforou, papageorgiou, kosko, stylios
     print_status = False    # print status of the sub-fcms
 
@@ -440,18 +432,14 @@ if __name__ == "__main__":
     lambdas = [0.8]
     colors = plot_sigmoid(lambdas)
 
-    #company_type 1 -> AL 0.1
-    #company_type 2 -> AL misti
-    #company_type 3 -> AL 0.9
-    #company_type 4 -> AL 0.5, 0.7, e uno a 0
-    companies = [1, 3, 4]   # AL file type of sub-fcms
+    companies = ["low", "medium", "high"]   # AL file type of sub-fcms
 
     res = {}
     for lambda_value in lambdas:
         models = []
         for c in companies:
             print(f"Algorithm: {fcm_algorithm}, Lambda: {lambda_value}, Iterations: {iterations}, Company Type: {c}")
-            fcm_obj = FCM(n_fcm, iterations, model_type, c)
+            fcm_obj = FCM(n_fcm, iterations, c)
             fcm_obj.run_fcm(lambda_value, fcm_algorithm)
             fcm_obj.print_results(flt)
             linguistic_al = flt.get_linguisitic_term(fcm_obj.final_activation_level)

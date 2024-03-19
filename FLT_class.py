@@ -74,18 +74,23 @@ class Fuzzy_Linguistic_Terms:
 
         return None
 
+    def get_value(self, term):
+        assert self.mfs is not None
+
+        if term not in self.linguistic_terms.keys():
+            return 0
+
+        return self.linguistic_terms[term][1]
+
 
 # activation level linguistic terms
 def define_al_fuzzy():
     range_values = np.arange(0, 1.001, 0.001)
     # 0.1, 0.3, 0.5, 0.7, 0.9
     linguistic_terms = {
-                        'NA':   [0, 0, 0.1],
-                        'VL':   [-0.1, 0.1, 0.3],
-                        'L':    [0.1, 0.3, 0.5],
-                        'M':    [0.3, 0.5, 0.7],
-                        'H':    [0.5, 0.7, 0.9],
-                        'VH':   [0.7, 0.9, 1.1]
+                        'L':   [0, 0.25, 0.5],
+                        'M':   [0.25, 0.5, 0.75],
+                        'H':   [0.5, 0.75, 1.]
                         }
     flt = Fuzzy_Linguistic_Terms(range_values, linguistic_terms)
     return flt

@@ -4,12 +4,15 @@ import json
 import matplotlib.pyplot as plt
 from random import randint
 import copy
+import FLT_class
+import pandas as pd
 
 class FCM:
 
-    def __init__(self, n_fcm, iterations, company_type, new_values=[]):
+    def __init__(self, n_fcm, iterations, company_type, flt, new_values=[]):
         self.n_fcm = n_fcm
         self.iterations = iterations
+        self.al_flt = flt
         self.model : list[nx.DiGraph] = self.build_model(company_type, new_values)
 
 
@@ -21,7 +24,7 @@ class FCM:
         for i in range(self.n_fcm):
             # get weights and activation levels from csv files 
             ww = np.genfromtxt(f'model/{i}_wm.csv', delimiter=',')
-            al = np.genfromtxt(f'cases/{company_type}/{i}_al.csv', delimiter=',')
+            al = pd.read_csv(f'cases/{company_type}/{i}_al.csv', header=None).values
 
             if len(new_values) > 0:
                 # modify activation levels based on genes
@@ -31,7 +34,7 @@ class FCM:
                     g_index+=1
 
             # create graph from weights and activation levels
-            h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1)
+            h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1, self.al_flt)
 
             # get description of the graph
             desc = json.load(open(f'model/{i}_desc.json'))
@@ -39,15 +42,14 @@ class FCM:
             desc_nodes = desc['nodes']
             desc_nodes_list.append(desc_nodes)
             self.desc_graphs.append(desc)
-            #FCM_class.visualize(h, desc_main, desc_nodes)
 
             graph_list.append(h)
 
         return graph_list
-    
+
 
     @staticmethod
-    def fcm_from_matrix_to_graph(ww, al, depth, iterations):
+    def fcm_from_matrix_to_graph(ww, al, depth, iterations, flt : FLT_class.Fuzzy_Linguistic_Terms):
         "Create a graph based on a given matrix"
         G = nx.DiGraph(depth=depth)
         n = ww.shape[0]
@@ -57,7 +59,9 @@ class FCM:
             # "value" is an array representing the activation level through the iterations
             # "link" is the index of the graph to which the node is linked to
             G.add_node(k, attr_dict = {"value":[0]*iterations, "link":al[k][1]})
-            G.nodes[k]['attr_dict']['value'][0] = round(al[k][0], 5)
+            l_al = al[k][0]
+            v_al = flt.get_value(l_al)
+            G.nodes[k]['attr_dict']['value'][0] = round(v_al, 5)
 
         # edges
         for i in range(n):
@@ -88,19 +92,17 @@ class FCM:
         plt.show()
 
 
-    def run_fcm(self, lambda_value, fcm_type):
+    def run_fcm(self, lambda_value, threshold=0.001):
         "Run the FCM algorithm"
-        match fcm_type:
-            case "christoforou":
-                graph_list = FCM.christoforou_fcm_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value)
-            case "papageorgiou":
-                graph_list = FCM.papageorgiou_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value)
-            case "kosko":
-                graph_list = FCM.kosko_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value)
-            case "stylios":
-                graph_list = FCM.stylios_groumpos_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value)
-            case _:
-                graph_list = None
+        graph_list, t = FCM.papageorgiou_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value, threshold=threshold)
+
+        # refine the final activation level array
+        print(f"FINISHED AT ITERATION {t}")
+        for i in range (len(graph_list)):
+            G = graph_list[i]
+            for n in range(len(G.nodes)):
+                G.nodes[n]['attr_dict']['value'] = G.nodes[n]['attr_dict']['value'][:t]
+            graph_list[i] = G
 
         self.model_out = graph_list
 
@@ -109,68 +111,10 @@ class FCM:
         self.final_activation_level = graph_list[0].nodes[n_main_concept]['attr_dict']['value'][-1]
 
         return
-    
-
-    @staticmethod
-    def christoforou_fcm_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value):
-        "Christoforou, Andreas, et al. 'Adopting microservice architecture: A decision support model based on genetically evolved multi-layer FCM.' Applied Soft Computing 114 (2022)"
-        G = graph_list[g_index]
-
-        for t in range(start_iter, end_iter):   #for each iteration
-            for node in G:  #for each node in the graph
-
-                # contribution of the linked node
-                # recursive call of the algorithm for the linked graph
-                if G.nodes[node]['attr_dict']['link'] > 0:
-                    node_attr_links = int(G.nodes[node]['attr_dict']['link'])
-                    graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM.christoforou_fcm_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
-                    G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
-
-                # contribution of the incoming edges
-                b = 0   # B_i^t
-                for edge in G.in_edges(node):   #for each incoming edge
-                    other, _ = edge
-                    w_edge = G[other][node]['weight']
-                    other_attr = G.nodes[other]['attr_dict']['value']
-
-                    if t == 1:
-                        al_old = 0
-                    else:
-                        al_old = other_attr[t-2]   # -2 because start_iter is 1 and not 0
-
-                    al_new = other_attr[t-1]    # A_j^t
-                    # al_new = A_j^t
-                    # al_old = A_j^(t-1)
-                    d_al = (al_new - al_old)    # delta A_j^t
-                    
-                    # classic method
-                    b += (w_edge * d_al)    # B_i^t = sum(w_ji * delta A_j^t)
-                
-                # contribution of the previous activation level
-                al_node = G.nodes[node]['attr_dict']['value'][t-1] # A_i^t
-                if al_node != 0:
-                    c = (np.log((1-al_node)/al_node))/-lambda_value  # C_i^t = log((1-A_i^t)/A_i^t) / -lambda
-                else:
-                    c = 0   # to avoid having invalid values in the graph
-                
-                in_factor = 1.2
-                x = in_factor * b + c   # x = 1.2 * B_i^t + C_i^t
-                
-                if b == 0:
-                    final_al = G.nodes[node]['attr_dict']['value'][t-1]
-                else:
-                    final_al = round(FCM.sigmoid(x, lambda_value), 5) # A_i^t = sigmoid(x)
-                
-                G.nodes[node]['attr_dict']['value'][t] = final_al
-            
-        graph_list[g_index] = G
-
-        return graph_list
 
 
     @staticmethod
-    def papageorgiou_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value):
+    def papageorgiou_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value, threshold=0.001):
         "E.I. Papageorgiou, 'A new methodology for Decisions in Medical Informatics using fuzzy cognitive maps based on fuzzy rule-extraction techniques', Applied Soft Computing, vol. 11, Issue 1, p.p. 500-513, 2011."
         G = graph_list[g_index]
 
@@ -181,7 +125,7 @@ class FCM:
                 if G.nodes[node]['attr_dict']['link'] > 0:
                     node_attr_links = int(G.nodes[node]['attr_dict']['link'])
                     graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM.papageorgiou_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
+                    graph_list, t = FCM.papageorgiou_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value, threshold)
                     G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
 
                 # contribution of the incoming edges
@@ -192,7 +136,7 @@ class FCM:
                     other_attr = G.nodes[other]['attr_dict']['value']
                     
                     c = 2 * other_attr[t-1] - 1  # C_j^t = 2 * A_j^(t-1) - 1
-                        
+
                     b += w_edge * c   # B_i^t = sum(w_ij * C_j^t)
 
                 x = b + 2 * G.nodes[node]['attr_dict']['value'][t-1] - 1  # X_i^t = B_i^t + 2 * A_i^(t-1) - 1
@@ -200,88 +144,25 @@ class FCM:
                 final_al = round(FCM.sigmoid(x, lambda_value), 5)  # A_i^t = sigmoid(X_i^t)
 
                 G.nodes[node]['attr_dict']['value'][t] = final_al
-        
+
+                if g_index == 0:
+                    n_nodes = len(G.nodes)
+                    if node == n_nodes-1:
+                        if abs(G.nodes[node]['attr_dict']['value'][t] - G.nodes[node]['attr_dict']['value'][t-1]) < threshold:
+                            print(f"Threshold reached at iteration {t}")
+                            print(f"Node: {node}, Value: {G.nodes[node]['attr_dict']['value'][t]}, prev: {G.nodes[node]['attr_dict']['value'][t-1]}")
+                            graph_list[g_index] = G
+                            return graph_list, t
+
         graph_list[g_index] = G
-        return graph_list
-    
+        return graph_list, t
 
-    @staticmethod
-    def kosko_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value):
-        "B. Kosko, 'Fuzzy cognitive maps', International Journal of Man-Machine Studies 24, p.p. 65-75, 1986."
-        G = graph_list[g_index]
-
-        for t in range(start_iter,end_iter):    #for each iteration
-            for node in G:  #for each node in the graph
-
-                # contribution of the linked node
-                # recursive call of the algorithm for the linked graph
-                if G.nodes[node]['attr_dict']['link'] > 0:
-                    node_attr_links = int(G.nodes[node]['attr_dict']['link'])
-                    graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM.kosko_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
-                    G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
-
-                # contribution of the incoming edges of the node i (B_i^t)
-                b = 0
-                for edge in G.in_edges(node):   #for each incoming edge
-                    # i is the node index
-                    # j is the index of the node from which the edge comes
-                    other, _ = edge
-                    w_edge = G[other][node]['weight']   # edge weight
-                    other_attr = G.nodes[other]['attr_dict']['value']   # other node attributes
-                    
-                    b += w_edge * other_attr[t-1]   # B_i^t = sum(w_ji * A_j^(t-1))
-            
-                final_al = round(FCM.sigmoid(b, lambda_value), 5)  # A_i^t = sigmoid(B_i^t)
-                
-                G.nodes[node]['attr_dict']['value'][t] = final_al
-                
-        graph_list[g_index] = G      
-        return graph_list
-    
-
-    @staticmethod
-    def stylios_groumpos_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value):
-        "C.D. Stylios, P.P. Groumpos, 'A Soft Computing Approach for Modelling the Supervisor of Manufacturing Systems', Intelligent and Robotic Systems, vol. 26, p.p. 389-403, 1999."
-        G = graph_list[g_index]
-            
-        for t in range(start_iter,end_iter):    #for each iteration
-            for node in G:  #for each node in the graph
-
-                # contribution of the linked node
-                # recursive call of the algorithm for the linked graph
-                if G.nodes[node]['attr_dict']['link'] > 0:
-                    node_attr_links = int(G.nodes[node]['attr_dict']['link'])
-                    graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list = FCM.stylios_groumpos_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value)
-                    G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
-
-                # contribution of the incoming edges
-                b = 0
-                for edge in G.in_edges(node):   #for each incoming edge
-                    other, _ = edge
-                    w_edge = G[other][node]['weight']
-                    other_attr = G.nodes[other]['attr_dict']['value']
-                    
-                    b += w_edge * other_attr[t-1]   # B_i^t = sum(w_ij * A_j^(t-1))
-
-                al_node = G.nodes[node]['attr_dict']['value'][t-1]
-
-                b = b + al_node
-            
-                final_al = round(FCM.sigmoid(b, lambda_value), 5)
-                
-                G.nodes[node]['attr_dict']['value'][t] = final_al
-                
-        graph_list[g_index] = G
-        return graph_list
-    
 
     @staticmethod
     def sigmoid(x, lambda_value):
         "Sigmoid function"
         return 1/(1+np.exp(-lambda_value*x))
-    
+
 
     def print_weights_nodes(self):
         "Print the weights of the nodes of the final graph"
@@ -354,7 +235,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors):
     all_x = {}
     all_y = {}
     for lambda_ in fcms.keys():
-        fcm_objs : list(FCM) = fcms[lambda_]
+        fcm_objs : list = fcms[lambda_]
 
         for i in range(len(companies)):
             G = fcm_objs[i].model_out[0]
@@ -382,7 +263,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors):
         plt.xlabel("Iterations")
         plt.ylabel("Activation Level")
         plt.title(f"Company {companies[i]}")
-    
+
     plt.show(block=False)
 
 
@@ -412,7 +293,7 @@ def plot_sigmoid(lambda_values):
     return colors
 
 
-import FLT_class
+
 if __name__ == "__main__":
     
     flt = FLT_class.define_al_fuzzy()
@@ -423,24 +304,25 @@ if __name__ == "__main__":
 
     n_fcm = 6   # number of sub-fcms
     iterations = 100  # number of iterations
-    fcm_algorithm = "papageorgiou"    # christoforou, papageorgiou, kosko, stylios
+    threshold = 0.001
     print_status = False    # print status of the sub-fcms
 
     #lambda determina quanto il modello è sensibile ai cambiamenti dei AL
     #lamda grande -> più sensibile ai cambiamenti, tende a 0 o 1
     #lamda piccolo -> meno sensibile ai cambiamenti, tende a 0.5
-    lambdas = [0.8]
+    #lambdas = [0.8, 0.81]
+    lambdas = [0.79, 0.8, 0.81]
     colors = plot_sigmoid(lambdas)
 
-    companies = ["low", "medium", "high"]   # AL file type of sub-fcms
+    companies = ["low", "high", "mix"]   # AL file type of sub-fcms
 
     res = {}
     for lambda_value in lambdas:
         models = []
         for c in companies:
-            print(f"Algorithm: {fcm_algorithm}, Lambda: {lambda_value}, Iterations: {iterations}, Company Type: {c}")
-            fcm_obj = FCM(n_fcm, iterations, c)
-            fcm_obj.run_fcm(lambda_value, fcm_algorithm)
+            print(f"Algorithm: Papageorgiou, Lambda: {lambda_value}, Iterations: {iterations}, Company Type: {c}")
+            fcm_obj = FCM(n_fcm, iterations, c, flt)
+            fcm_obj.run_fcm(lambda_value, threshold)
             fcm_obj.print_results(flt)
             linguistic_al = flt.get_linguisitic_term(fcm_obj.final_activation_level)
             print(f"Final activation level: {fcm_obj.final_activation_level} ({linguistic_al})")

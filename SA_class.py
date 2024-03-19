@@ -1,5 +1,6 @@
 import networkx as nx
 from FCM_class import FCM
+import FLT_class
 
 '''
 Complexity
@@ -60,8 +61,6 @@ class StaticAnalysis:
         self.imp_degree = {}
         self.imp_value = {}
 
-        print(len(self.description))
-
         for i in range(self.n_graphs):
             sorted_degree = sorted(self.degrees[i], key=lambda x: x[1], reverse=True)
             idx_deg = sorted_degree[0][0]
@@ -93,10 +92,10 @@ class StaticAnalysis:
 
 if __name__ == "__main__":
     n_fcm = 6
-    model_type = 5
-    c = 4
-    iterations = 25
-    fcm_obj = FCM(n_fcm, iterations, model_type, c)
+    c = "low"
+    iterations = 0
+    flt = FLT_class.define_wm_fuzzy()
+    fcm_obj = FCM(n_fcm, iterations, c, flt)
 
     sa = StaticAnalysis(fcm_obj.model, fcm_obj.desc_graphs)
 

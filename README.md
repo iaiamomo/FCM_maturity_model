@@ -1,25 +1,21 @@
 # FCM-based Maturity Model for Industry 4.0
 
-## Preliminaries
-We assume the user has **Python 3.10** installed
+## Getting Started
 
-1. Download the repository
-    ```shell
-    git clone https://github.com/iaiamomo/FCM_maturity_model.git
+- Create a new [conda](https://docs.anaconda.com/free/miniconda/) environment:
+    ```bash
+    conda create -n pyllm python=3.10
+    conda activate pyllm
     ```
 
-- Install the Python packages
-    ```shell
-    pip install -r requirements.txt
+- Install the dependencies:
+    ```bash
+    pip install -r requirements.py
     ```
 
 ## Run the code
 
-- Define the activation levels (AL) of each technologies (nodes) inside the [models](models) folder. [Model](#model) describe how to define the ALs.
-
-    **NOTE:** Please use [model5](models/model5/).
-
-- Define the characteristics of the defined FCM into the configuration file [config.json](config.json)
+- Define the activation levels (AL) of each technologies (nodes) inside the [cases](cases) folder.
 
 - Run static analyses of the FCM
     ```shell

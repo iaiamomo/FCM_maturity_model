@@ -140,17 +140,16 @@ class Population(object):
 class Algorithm(object):
     
     def __init__(self, genes=[]):
-        #flt = fuzzy.define_al_fuzzy()
+        flt = FLT_class.define_al_fuzzy()
 
         n_fcm = 6   # number of sub-fcms
-        lambda_value = 0.7  # lambda value
+        lambda_value = 0.8  # lambda value
         iterations = 100  # number of iterations
-        company_type = 4    # al file type of sub-fcms
-        model_type = 5  # model type
-        fcm_algorithm = "papageorgiou"    # christoforou, papageorgiou, kosko, stylios
+        threshold = 0.001    # threshold
+        company_type = 'low'    # al file type of sub-fcms
 
-        fcm_obj = FCM(n_fcm, iterations, model_type, company_type, genes)
-        fcm_obj.run_fcm(lambda_value, fcm_algorithm)
+        fcm_obj = FCM(n_fcm, iterations, company_type, flt, genes)
+        fcm_obj.run_fcm(lambda_value, threshold)
         #fcm_obj.print_results(flt)
         self.result = fcm_obj.final_activation_level
 
@@ -223,8 +222,8 @@ if __name__ == "__main__":
     retain = 5  # percentage of fittest individuals to be kept as parents for next generation (elitist selection)
 
     # target concept value
-    target_val = 0.6
-    
+    target_val = 0.8
+
     results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, mutate_prob, retain, target_val)
 
     # from the results_pop array, get the best individual

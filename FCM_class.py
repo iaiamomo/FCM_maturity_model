@@ -21,20 +21,26 @@ class FCM:
         graph_list = []
         desc_nodes_list = []
         self.desc_graphs = []
+        idx_new_values = 0
         for i in range(self.n_fcm):
             # get weights and activation levels from csv files 
             ww = np.genfromtxt(f'model/{i}_wm.csv', delimiter=',')
             al = pd.read_csv(f'cases/{company_type}/{i}_al.csv', header=None).values
 
+            # if doing genetic algorithm, change the activation levels
             if len(new_values) > 0:
-                # modify activation levels based on genes
-                g_index = 0
-                for x in range(len(al)):    # x is the row index
-                    al[x][0] = new_values[g_index]
-                    g_index+=1
+                if i == 0:  # if main concept set to 0
+                    for x in range(len(al)):
+                        al[x][0] = 0
+                else:   # if sub-concepts
+                    # modify activation levels based on genes, change only the technologies (not the main concept)
+                    al[0][0] = 0
+                    for x in range(1, len(al)):    # x is the row index
+                        al[x][0] = new_values[idx_new_values]
+                        idx_new_values+=1
 
             # create graph from weights and activation levels
-            h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1, self.al_flt)
+            h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1, self.al_flt, new_values)
 
             # get description of the graph
             desc = json.load(open(f'model/{i}_desc.json'))
@@ -49,19 +55,24 @@ class FCM:
 
 
     @staticmethod
-    def fcm_from_matrix_to_graph(ww, al, depth, iterations, flt : FLT_class.Fuzzy_Linguistic_Terms):
+    def fcm_from_matrix_to_graph(ww, al, depth, iterations, flt : FLT_class.Fuzzy_Linguistic_Terms, new_values=[]):
         "Create a graph based on a given matrix"
         G = nx.DiGraph(depth=depth)
         n = ww.shape[0]
 
         # nodes
-        for k in range(n):
-            # "value" is an array representing the activation level through the iterations
-            # "link" is the index of the graph to which the node is linked to
-            G.add_node(k, attr_dict = {"value":[0]*iterations, "link":al[k][1]})
-            l_al = al[k][0]
-            v_al = flt.get_value(l_al)
-            G.nodes[k]['attr_dict']['value'][0] = round(v_al, 5)
+        # "value" is an array representing the activation level through the iterations
+        # "link" is the index of the graph to which the node is linked to
+        if len(new_values) == 0:    # if doing inference
+            for k in range(n):
+                G.add_node(k, attr_dict = {"value":[0]*iterations, "link":al[k][1]})
+                l_al = al[k][0]
+                v_al = flt.get_value(l_al)
+                G.nodes[k]['attr_dict']['value'][0] = round(v_al, 5)
+        else:   # if doing genetic algorithm
+            for k in range(n):
+                G.add_node(k, attr_dict = {"value":[0]*iterations, "link":al[k][1]})
+                G.nodes[k]['attr_dict']['value'][0] = round(al[k][0], 5)
 
         # edges
         for i in range(n):
@@ -97,7 +108,7 @@ class FCM:
         graph_list, t = FCM.papageorgiou_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value, threshold=threshold)
 
         # refine the final activation level array
-        print(f"FINISHED AT ITERATION {t}")
+        #print(f"FINISHED AT ITERATION {t}")
         for i in range (len(graph_list)):
             G = graph_list[i]
             for n in range(len(G.nodes)):
@@ -149,8 +160,8 @@ class FCM:
                     n_nodes = len(G.nodes)
                     if node == n_nodes-1:
                         if abs(G.nodes[node]['attr_dict']['value'][t] - G.nodes[node]['attr_dict']['value'][t-1]) < threshold:
-                            print(f"Threshold reached at iteration {t}")
-                            print(f"Node: {node}, Value: {G.nodes[node]['attr_dict']['value'][t]}, prev: {G.nodes[node]['attr_dict']['value'][t-1]}")
+                            #print(f"Threshold reached at iteration {t}")
+                            #print(f"Node: {node}, Value: {G.nodes[node]['attr_dict']['value'][t]}, prev: {G.nodes[node]['attr_dict']['value'][t-1]}")
                             graph_list[g_index] = G
                             return graph_list, t
 
@@ -235,7 +246,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors):
     all_x = {}
     all_y = {}
     for lambda_ in fcms.keys():
-        fcm_objs : list = fcms[lambda_]
+        fcm_objs : list[FCM] = fcms[lambda_]
 
         for i in range(len(companies)):
             G = fcm_objs[i].model_out[0]
@@ -311,10 +322,10 @@ if __name__ == "__main__":
     #lamda grande -> più sensibile ai cambiamenti, tende a 0 o 1
     #lamda piccolo -> meno sensibile ai cambiamenti, tende a 0.5
     #lambdas = [0.8, 0.81]
-    lambdas = [0.79, 0.8, 0.81]
+    lambdas = [0.79] #0.79, 0.8, 0.81]
     colors = plot_sigmoid(lambdas)
 
-    companies = ["low", "high", "mix"]   # AL file type of sub-fcms
+    companies = ["low", "medium", "high", "mix"]   # AL file type of sub-fcms
 
     res = {}
     for lambda_value in lambdas:

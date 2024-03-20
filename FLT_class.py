@@ -4,13 +4,10 @@ import matplotlib.pyplot as plt
 
 class Fuzzy_Linguistic_Terms:
     
-    def __init__(self, range_values, linguistic_terms, type_mf='triangular'):
+    def __init__(self, range_values, linguistic_terms):
         self.range_values : np.array = range_values
         self.linguistic_terms : dict = linguistic_terms
-        if type_mf == 'triangular':
-            self.mfs = self.set_triangular_membership()
-        elif type_mf == 'trapezoidal':
-            self.mfs = self.set_trapezoidal_membership()
+        self.mfs = self.set_triangular_membership()
 
     def set_triangular_membership(self):
         assert self.range_values is not None
@@ -21,21 +18,10 @@ class Fuzzy_Linguistic_Terms:
             mfs[term] = fuzz.trimf(x = self.range_values, abc=self.linguistic_terms[term])
 
         return mfs
-    
-    def set_trapezoidal_membership(self):
-        assert self.range_values is not None
-        assert self.linguistic_terms is not None
-
-        mfs = {}
-        for term in self.linguistic_terms.keys():
-            mfs[term] = fuzz.trapmf(x = self.range_values, abcd=self.linguistic_terms[term])
-        
-        return mfs
 
     def plot_triangle(self):
         assert self.mfs is not None
 
-        #plt.figure(figsize = (10, 5))
         plt.figure()
         axes = plt.axes()
 
@@ -43,14 +29,11 @@ class Fuzzy_Linguistic_Terms:
             axes.plot(self.range_values, self.mfs[i], linewidth=0.5, label=str(i))
             axes.fill_between(self.range_values, self.mfs[i], alpha=0.5)
 
-        #axes.legend(bbox_to_anchor=(0.95, 0.6))
         axes.legend(loc='lower left')
 
         axes.spines['top'].set_visible(False)
         axes.spines['right'].set_visible(False)
-        #axes.get_xaxis().tick_bottom()
-        #axes.get_yaxis().tick_left()
-        #set x tick value
+        
         values = []
         for key in self.linguistic_terms.keys():
             values.append(self.linguistic_terms[key][1])
@@ -68,9 +51,14 @@ class Fuzzy_Linguistic_Terms:
     def get_linguisitic_term(self, value):
         assert self.mfs is not None
 
+        vals = {}
         for term in self.linguistic_terms.keys():
-            if fuzz.interp_membership(self.range_values, self.mfs[term], value) > 0:
-                return term
+            res = fuzz.interp_membership(self.range_values, self.mfs[term], value)
+            if res > 0:
+                vals[res] = term
+        if len(vals) > 0:
+            max_val = max(vals)
+            return vals[max_val]
 
         return None
 
@@ -86,11 +74,13 @@ class Fuzzy_Linguistic_Terms:
 # activation level linguistic terms
 def define_al_fuzzy():
     range_values = np.arange(0, 1.001, 0.001)
-    # 0.1, 0.3, 0.5, 0.7, 0.9
     linguistic_terms = {
-                        'L':   [0, 0.25, 0.5],
-                        'M':   [0.25, 0.5, 0.75],
-                        'H':   [0.5, 0.75, 1.]
+                        'NA':   [0, 0, 0.001],
+                        'VL':   [-0.1, 0.1, 0.3],
+                        'L':    [0.1, 0.3, 0.5],
+                        'M':    [0.3, 0.5, 0.7],
+                        'H':    [0.5, 0.7, 0.9],
+                        'VH':   [0.7, 0.9, 1.1]
                         }
     flt = Fuzzy_Linguistic_Terms(range_values, linguistic_terms)
     return flt
@@ -110,10 +100,15 @@ def define_wm_fuzzy():
 
 
 if __name__ == "__main__":
-    flt = define_wm_fuzzy()
-    flt.plot_triangle()
-    plt.show(block=False)
+    #flt = define_wm_fuzzy()
+    #flt.plot_triangle()
+    #plt.show(block=False)
 
     flt = define_al_fuzzy()
-    flt.plot_triangle()
-    plt.show()
+    res = flt.get_linguisitic_term(0.49)
+    print(res)
+
+
+
+    #flt.plot_triangle()
+    #plt.show()

@@ -1,6 +1,8 @@
 import networkx as nx
 from FCM_class import FCM
 import FLT_class
+import os
+import sys
 
 '''
 Complexity
@@ -47,8 +49,8 @@ class StaticAnalysis:
         self.values = {}
         for i in range(n_graphs):
             G : nx.DiGraph = self.model[i]
-            self.degrees[i] = G.degree()
-            self.values[i] = G.degree(weight='weight')
+            self.degrees[i] = G.out_degree()
+            self.values[i] = G.out_degree(weight='weight')
             new_values = []
             for elem in self.values[i]:
                 elem = list(elem)
@@ -63,24 +65,38 @@ class StaticAnalysis:
 
         for i in range(self.n_graphs):
             sorted_degree = sorted(self.degrees[i], key=lambda x: x[1], reverse=True)
+            res = []
             idx_deg = sorted_degree[0][0]
             value_deg = sorted_degree[0][1]
             if idx_deg == 0:
                 idx_deg = sorted_degree[1][0]
                 value_deg = sorted_degree[1][1]
-            idx_deg += 1
-            name_idx_deg = self.description[i]['nodes'][str(idx_deg)]
-            self.imp_degree[i] = (idx_deg, name_idx_deg, value_deg)
+            name_idx_deg = self.description[i]['nodes'][str(idx_deg+1)]
+            res.append((idx_deg, name_idx_deg, value_deg))
+            for j in range(idx_deg+1, len(sorted_degree)):
+                if sorted_degree[j][1] == value_deg:
+                    idx_deg = sorted_degree[j][0]
+                    value_deg = sorted_degree[j][1]
+                    name_idx_deg = self.description[i]['nodes'][str(idx_deg+1)]
+                    res.append((idx_deg, name_idx_deg, value_deg))
+            self.imp_degree[i] = res
 
             sorted_val = sorted(self.values[i], key=lambda x: x[1], reverse=True)
+            res = []
             idx_val = sorted_val[0][0]
             value_val = sorted_val[0][1]
             if idx_val == 0:
                 idx_val = sorted_val[1][0]
                 value_val = sorted_val[1][1]
-            idx_val += 1
-            name_idx_val = self.description[i]['nodes'][str(idx_val)]
-            self.imp_value[i] = (idx_val, name_idx_val, value_val)
+            name_idx_val = self.description[i]['nodes'][str(idx_val+1)]
+            res.append((idx_val, name_idx_val, value_val))
+            for j in range(idx_val+1, len(sorted_val)):
+                if sorted_val[j][1] == value_val:
+                    idx_val = sorted_val[j][0]
+                    value_val = sorted_val[j][1]
+                    name_idx_val = self.description[i]['nodes'][str(idx_val+1)]
+                    res.append((idx_val, name_idx_val, value_val))            
+            self.imp_value[i] = res
 
         return self.imp_degree, self.imp_value
 
@@ -91,9 +107,20 @@ class StaticAnalysis:
         
 
 if __name__ == "__main__":
+    argv = sys.argv
+    if len(argv) < 2 or len(argv) > 3:
+        print("Usage: python SA_class.py <case_name>")
+        c = "low"
+        #sys.exit(1)
+    else:
+        c = argv[1]
+        # check if there exists a folder with the name of the case in the cases folder
+        if c not in os.listdir("cases"):
+            print(f"Case {c} not found")
+            sys.exit(1)
+
     n_fcm = 6
-    c = "low"
-    iterations = 0
+    iterations = 100
     flt = FLT_class.define_wm_fuzzy()
     fcm_obj = FCM(n_fcm, iterations, c, flt)
 

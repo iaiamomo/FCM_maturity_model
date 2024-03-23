@@ -6,6 +6,8 @@ import glob
 import FLT_class
 import pandas as pd
 import json
+import os
+import sys
 
 # class representing an individual in the population
 # in this case an individual is a FCM (activation levels of the nodes)
@@ -50,10 +52,10 @@ class Individual(object):
 # in this case the population is an evolving set of individuals (FCMs with different activation levels)
 class Population(object):
 
-    def __init__(self, pop_size=10, mutate_prob=0.01, retain=5, target_val=0.6, individual_size = 30, company_type='low'):
+    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low'):
         self.pop_size = pop_size
         self.individuals_size = individual_size
-        self.mutate_prob = mutate_prob
+        self.crossover_prob = crossover_prob
         self.retain = retain
         self.target_val = target_val
         self.fitness_history = []
@@ -65,6 +67,7 @@ class Population(object):
         self.individuals : list[Individual] = []
         for x in range(pop_size):
             self.individuals.append(Individual(genes=None, target_val=self.target_val, individual_id=x, company_type=company_type))
+
 
     # Grade the generation by getting the average fitness of its individuals
     def grade(self, generation=None):
@@ -78,8 +81,9 @@ class Population(object):
 
         # sort individuals by fitness (lower fitness it better in this case)
         self.individuals = sorted(self.individuals, key=lambda x: x.fitness())  # here x.fitness() does not run the FCM algorithm
+
         # set done to True if the target value is reached or if the fitness is too low
-        if pop_fitness < 0.03 or self.individuals[0].fitness_val==0:
+        if pop_fitness < 0.03 or self.individuals[0].fitness_val==0 or self.individuals[0].fitness_val < 0.03:
             self.done = True
 
         if generation is not None:
@@ -87,25 +91,11 @@ class Population(object):
 
 
     # select the fittest individuals (elitist selection) to be the parents of next generation (lower fitness it better in this case)
-    # also select non-fittest individuals (roulette wheel) to help get us out of local maximums
     def Select(self):
         # ELITIST SELECTION - keep the fittest as parents for next gen
         retain_length = (self.retain/100) * len(self.individuals)
         self.parents = self.individuals[:int(retain_length)]
         self.elite = self.parents[:] # keep a *copy* of the fittest individuals
-
-        # ROULETTE WHEEL SELECTION - select some from unfittest and add to parents array
-        # gives higher-probability chances to the better-performing individuals
-        unfittest = self.individuals[int(retain_length):]
-        max_fitness = sum(uf.fitness() for uf in unfittest) # sum of fitness of unfittest individuals
-        while len(self.parents) < len(self.individuals):
-            pick = random.uniform(0, max_fitness)
-            current = 0
-            for unfit in unfittest:
-                current += unfit.fitness()  # here unfit.fitness() does not run the FCM algorithm
-                if current < pick:
-                    self.parents.append(unfit)
-                    break
 
 
     # crossover the parents to generate a new generation of individuals
@@ -118,22 +108,34 @@ class Population(object):
                 mother = random.choice(self.parents)
                 while mother == father:
                     mother = random.choice(self.parents)
-                child_genes = [random.choice(pixel_pair) for pixel_pair in zip(father.genes, mother.genes)] # randomly combines genes of parents
-                child = Individual(genes=child_genes, target_val=self.target_val)
-                children.append(child)
+                # one-point crossover
+                if self.crossover_prob > np.random.rand():
+                    idx_crossover = np.random.randint(0, len(father.genes))
+                    child_genes = father.genes[:idx_crossover] + mother.genes[idx_crossover:]
+                    child = Individual(genes=child_genes, target_val=self.target_val)
+                    children.append(child)
+                    child_genes = mother.genes[:idx_crossover] + father.genes[idx_crossover:]
+                    child = Individual(genes=child_genes, target_val=self.target_val)
+                    children.append(child)
+            children = children[:target_children_size]
             self.individuals = children
 
 
     # alters at most one gene value for each individual
     def Mutation(self):
         for x in self.individuals:
-            if self.mutate_prob > np.random.rand():
-                mutate_index = np.random.randint(len(x.genes))
+            # generate a dictionary of position, gene
+            dic_genes = {i: x.genes[i] for i in range(len(x.genes))}
+            # get the position of the lower gene value
+            mutate_index = min(dic_genes, key=dic_genes.get)
+            # mutate the gene to a random value greater than the current value
+            new_value = np.random.randint(1,10)/10
+            old_value = x.genes[mutate_index]
+            while new_value <= old_value:
                 new_value = np.random.randint(1,10)/10
-                old_value = x.genes[mutate_index]
-                while new_value < old_value:
-                    new_value = np.random.randint(1,10)/10
-                x.genes[mutate_index] = new_value
+                if new_value == 0.9:
+                    break
+            x.genes[mutate_index] = new_value
 
 
     # evolves the current population to the next generation
@@ -185,7 +187,7 @@ class ALGE_class():
 
 
     # execute the what-if analysis of the FCM
-    def what_if(n_runs, pop_size, generation, mutate_prob, retain, target_val, company_type):
+    def what_if(n_runs, pop_size, generation, retain, target_val, company_type):
         # FCM parameters    
         individual_size = ALGE_class.compute_individual_size()
 
@@ -193,7 +195,7 @@ class ALGE_class():
         results_pop = []
         results_gen = []
         for k in range(n_runs):
-            pop = Population(pop_size=pop_size, mutate_prob=mutate_prob, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type)
+            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type)
         
             for x in range(generation):
                 pop.grade(generation = x)
@@ -227,25 +229,42 @@ class ALGE_class():
 
 
 if __name__ == "__main__":
+    argv = sys.argv
+    if len(argv) < 3 or len(argv) > 4:
+        print("Usage: python GA_class.py <target_value> <case_name>")
+        company_type = 'low'
+        target_val = 0.8
+        #sys.exit(1)
+    else:
+        target_val = argv[1]
+        company_type = argv[2]
+        # check if there exists a folder with the name of the case in the cases folder
+        if company_type not in os.listdir("cases"):
+            print(f"Case {company_type} not found")
+            sys.exit(1)
+        # check if the target value is a float
+        try:
+            target_val = float(target_val)
+        except ValueError:
+            print(f"Target value {target_val} is not a float")
+            sys.exit(1)
+
     # genetic algorithm parameters
-    n_runs = 1  # number of simulations
+    n_runs = 5  # number of simulations
     pop_size = 50   # number of individuals (FCM) in the population
     generation = 250    # number of generations
-    mutate_prob = 0.5   # probability of mutation
-    retain = 5  # percentage of fittest individuals to be kept as parents for next generation (elitist selection)
+    crossover_prob = 0.7    # probability of crossover
+    retain = 15  # percentage of fittest individuals to be kept as parents for next generation (elitist selection)
     flt = FLT_class.define_al_fuzzy()
 
-    # target concept value
-    target_val = 0.8
-    company_type = 'low'
-
-    results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, mutate_prob, retain, target_val, company_type)
+    results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
 
     # from the results_pop array, get the best individual
     best_individuals = []
     for pop in results_pop:
         best_individuals.append(pop.individuals[0])
 
+    #TODO: chose if print the best individual or all the best individuals
     # print the best individual
     best_best_individual = max(best_individuals, key=lambda x: x.algoritithm.result)
     print(f"Best individual: {best_best_individual.genes}")

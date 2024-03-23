@@ -6,6 +6,8 @@ from random import randint
 import copy
 import FLT_class
 import pandas as pd
+import sys
+import os
 
 class FCM:
 
@@ -304,9 +306,21 @@ def plot_sigmoid(lambda_values):
     return colors
 
 
-
 if __name__ == "__main__":
-    
+    argv = sys.argv
+    if len(argv) < 2 or len(argv) > 3:
+        print("Usage: python FCM_class.py <case_name>")
+        companies = ["low", "medium", "high"]   # AL file type of sub-fcms
+        #sys.exit(1)
+    else:
+        case_name = argv[1]
+        # check if there exists a folder with the name of the case in the cases folder
+        if case_name not in os.listdir("cases"):
+            print(f"Case {case_name} not found")
+            sys.exit(1)
+        else:
+            companies = [case_name]
+
     flt = FLT_class.define_al_fuzzy()
     flt.plot_triangle()
 
@@ -321,11 +335,8 @@ if __name__ == "__main__":
     #lambda determina quanto il modello è sensibile ai cambiamenti dei AL
     #lamda grande -> più sensibile ai cambiamenti, tende a 0 o 1
     #lamda piccolo -> meno sensibile ai cambiamenti, tende a 0.5
-    #lambdas = [0.8, 0.81]
-    lambdas = [0.79] #0.79, 0.8, 0.81]
+    lambdas = [0.3, 0.79, 0.8, 1.2]
     colors = plot_sigmoid(lambdas)
-
-    companies = ["low", "medium", "high", "mix"]   # AL file type of sub-fcms
 
     res = {}
     for lambda_value in lambdas:

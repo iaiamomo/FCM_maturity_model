@@ -24,25 +24,22 @@ class Individual(object):
                 for x in range(1, len(al)):
                     v_al = flt.get_value(al[x][0])
                     self.genes.append(v_al)
-            self.target_val = target_val
-            self.fitness_val = 0
             self.id = individual_id
-            self.algoritithm = None
         else:
             self.genes = genes
-            self.target_val = target_val
-            self.fitness_val = 0
-            self.algoritithm = None
-
+        self.target_val = target_val
+        self.fitness_val = 0
+        self.algoritithm = None
+        self.company_type = company_type
 
     # Returns fitness of individual
     # Fitness is the difference between target value and the calculated value
     def fitness(self, run=False, generation=None):
         if run==True:
             if generation == 0:
-                self.algoritithm = Algorithm()  # run the FCM algorithm
+                self.algoritithm = Algorithm(company_type=self.company_type)  # run the FCM algorithm
             else:
-                self.algoritithm = Algorithm(genes=self.genes)  # run the FCM algorithm
+                self.algoritithm = Algorithm(genes=self.genes, company_type=self.company_type)  # run the FCM algorithm
             computed_objective = self.algoritithm.result
             self.fitness_val = round(abs(self.target_val - computed_objective), 3)
         return self.fitness_val
@@ -156,14 +153,13 @@ class Population(object):
 # class representing the FCM algorithm
 class Algorithm(object):
     
-    def __init__(self, genes=[]):
+    def __init__(self, genes=[], company_type='low'):
         flt = FLT_class.define_al_fuzzy()
 
         n_fcm = 6   # number of sub-fcms
         lambda_value = 0.79  # lambda value
         iterations = 100  # number of iterations
         threshold = 0.001    # threshold
-        company_type = 'low'    # al file type of sub-fcms
 
         fcm_obj = FCM(n_fcm, iterations, company_type, flt, genes)
         fcm_obj.run_fcm(lambda_value, threshold)

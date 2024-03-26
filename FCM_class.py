@@ -270,7 +270,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors):
         plt.subplot(1, len(companies), i+1)
         plt.grid(True)
         for j in range(len(values_x)):
-            plt.plot(values_x[j], all_y[i][j], color=colors[j], label=f"lambda {lambdas[j]}")
+            plt.plot(values_x[j], all_y[i][j], color=colors[j], label=f"λ {lambdas[j]}")
         plt.ylim(0, 1)
         plt.legend()
         plt.xlabel("Iterations")
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     #lambda determina quanto il modello è sensibile ai cambiamenti dei AL
     #lamda grande -> più sensibile ai cambiamenti, tende a 0 o 1
     #lamda piccolo -> meno sensibile ai cambiamenti, tende a 0.5
-    lambdas = [0.3, 0.79, 0.8, 1.2]
+    lambdas = [0.79]
     colors = plot_sigmoid(lambdas)
 
     res = {}

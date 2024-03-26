@@ -100,15 +100,6 @@ def define_wm_fuzzy():
 
 
 if __name__ == "__main__":
-    #flt = define_wm_fuzzy()
-    #flt.plot_triangle()
-    #plt.show(block=False)
-
     flt = define_al_fuzzy()
     res = flt.get_linguisitic_term(0.49)
     print(res)
-
-
-
-    #flt.plot_triangle()
-    #plt.show()

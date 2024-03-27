@@ -1,0 +1,116 @@
+FCM CAD, CAM, PLM
+	Node IIoT
+		Initial AL:	L
+		Final AL: 	L
+	Node Cloud Services
+		Initial AL:	L
+		Final AL: 	H
+	Node AI, CV, PM, RPA
+		Initial AL:	L
+		Final AL: 	L
+	Node Cyber Security
+		Initial AL:	L
+		Final AL: 	VH
+	Node AR, VR
+		Initial AL:	L
+		Final AL: 	L
+	Node Digital Twin
+		Initial AL:	L
+		Final AL: 	H
+	Node DM, BI
+		Initial AL:	L
+		Final AL: 	VH
+FCM CRM
+	Node IIoT
+		Initial AL:	L
+		Final AL: 	VH
+	Node Cloud Services
+		Initial AL:	L
+		Final AL: 	H
+	Node AI, CV, PM, RPA
+		Initial AL:	L
+		Final AL: 	VH
+	Node Cyber Security
+		Initial AL:	L
+		Final AL: 	H
+	Node AR, VR
+		Initial AL:	L
+		Final AL: 	L
+	Node DM, BI
+		Initial AL:	L
+		Final AL: 	VH
+FCM ERP, SCM
+	Node IIoT
+		Initial AL:	L
+		Final AL: 	L
+	Node Cloud Services
+		Initial AL:	L
+		Final AL: 	VH
+	Node AI, CV, PM, RPA
+		Initial AL:	L
+		Final AL: 	L
+	Node Cyber Security
+		Initial AL:	L
+		Final AL: 	VH
+	Node Robotics
+		Initial AL:	L
+		Final AL: 	L
+	Node AR, VR
+		Initial AL:	L
+		Final AL: 	H
+	Node Digital Twin
+		Initial AL:	L
+		Final AL: 	VH
+	Node DM, BI
+		Initial AL:	L
+		Final AL: 	H
+FCM WMS, TMS
+	Node IIoT
+		Initial AL:	L
+		Final AL: 	L
+	Node Cloud Services
+		Initial AL:	L
+		Final AL: 	L
+	Node AI, CV, PM, RPA
+		Initial AL:	L
+		Final AL: 	L
+	Node Cyber Security
+		Initial AL:	L
+		Final AL: 	VH
+	Node Robotics
+		Initial AL:	L
+		Final AL: 	L
+	Node AR, VR
+		Initial AL:	L
+		Final AL: 	L
+	Node Digital Twin
+		Initial AL:	L
+		Final AL: 	VH
+	Node DM, BI
+		Initial AL:	L
+		Final AL: 	L
+FCM MES
+	Node IIoT
+		Initial AL:	L
+		Final AL: 	VH
+	Node Cloud Services
+		Initial AL:	L
+		Final AL: 	H
+	Node AI, CV, PM, RPA
+		Initial AL:	L
+		Final AL: 	VH
+	Node Cyber Security
+		Initial AL:	L
+		Final AL: 	VH
+	Node Robotics
+		Initial AL:	L
+		Final AL: 	L
+	Node AR, VR
+		Initial AL:	L
+		Final AL: 	H
+	Node Digital Twin
+		Initial AL:	L
+		Final AL: 	VH
+	Node DM, BI
+		Initial AL:	L
+		Final AL: 	M

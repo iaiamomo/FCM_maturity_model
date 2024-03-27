@@ -6,8 +6,8 @@ import glob
 from utils.FLT_class import *
 import pandas as pd
 import json
-import pickle
-import time
+import os
+import sys
 
 model_path = "../model"
 cases_path = "../cases"
@@ -34,7 +34,6 @@ class Individual(object):
         self.fitness_val = 0
         self.algoritithm = None
         self.company_type = company_type
-
 
     # Returns fitness of individual
     # Fitness is the difference between target value and the calculated value
@@ -246,70 +245,3 @@ class ALGA_class():
         plt.grid()
         plt.title("Fitness of the population")
         plt.show(block=False)
-
-
-if __name__ == "__main__":
-    # genetic algorithm parameters
-    n_runs = 10  # number of simulations
-    pop_size = 50   # number of individuals (FCM) in the population
-    generation = 250    # number of generations
-    best = False    # print the best individual
-    crossover_prob = 0.7    # probability of crossover
-    retain = 15  # percentage of fittest individuals to be kept as parents for next generation (elitist selection)
-    company_types = ['low', 'mix']
-    target_val = 'VH'
-    flt = define_al_fuzzy()
-    target_val = flt.get_value(target_val)
-
-    results_tot = {}
-    for company_type in company_types:
-        print(f"Running GA for {company_type} company type, crossover: {crossover_prob}, retain: {retain}")
-        time_1 = time.time()
-        results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
-        time_2 = time.time()
-        time_taken = time_2 - time_1
-        print(f"Time taken: {time_taken} sec")
-
-        # from the results_pop array, get the best individuals
-        best_individuals = []
-        for pop in results_pop:
-            best_individuals.append(pop.individuals[0])
-
-        # print the best individual
-        model_files = glob.glob(f'{model_path}/*_desc.json')
-        n_fcm = len(model_files)
-        for i in range(len(best_individuals)):
-            best_best_individual = best_individuals[i]
-            idx_best_individual = 0
-            file_string = ""
-            for j in range(1, n_fcm):
-                fcm_desc = f"{j}_desc.json"
-                with open(f'{model_path}/{fcm_desc}') as json_file:
-                    data = json.load(json_file)
-                    print(f"FCM {data['main']}")
-                    file_string += f"FCM {data['main']}\n"
-                    n_nodes = len(data['nodes'])
-                    with open(f'{cases_path}/{company_type}/{j}_al.csv') as al_file:
-                        al = pd.read_csv(al_file, header=None).values
-                        for k in range(1, n_nodes):
-                            initial_al = al[k][0]
-                            final_al = flt.get_linguisitic_term(best_best_individual.genes[idx_best_individual])
-                            idx_best_individual += 1
-                            print(f"\tNode {data['nodes'][str(k+1)]}")
-                            print(f"\t\tInitial AL:\t{initial_al}")
-                            print(f"\t\tFinal AL: \t{final_al}")
-                            file_string += f"\tNode {data['nodes'][str(k+1)]}\n"
-                            file_string += f"\t\tInitial AL:\t{initial_al}\n"
-                            file_string += f"\t\tFinal AL: \t{final_al}\n"
-            with open(f'ct_{company_type}_best_{i}_results.txt', 'w') as file:
-                file.write(file_string)
-
-        results_tot[company_type] = (results, results_pop, results_gen, time_taken)
-        # Plot results
-        ALGA_class.visualize(results, results_pop, company_type)
-    
-    # Save results in a pickle file
-    with open('ga_results/results.pkl', 'wb') as f:
-        pickle.dump(results_tot, f)
-
-    plt.show()

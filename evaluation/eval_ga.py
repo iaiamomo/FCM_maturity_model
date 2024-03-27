@@ -9,18 +9,21 @@ import json
 import pickle
 import time
 
+model_path = "../model"
+cases_path = "../cases"
+
 # class representing an individual in the population
 # in this case an individual is a FCM (activation levels of the nodes)
 class Individual(object):
 
     def __init__(self, genes=None, target_val=0.6, individual_id = None, company_type='low'):
         if genes is None:
-            al_files = glob.glob(f'../cases/{company_type}/*_al.csv')
+            al_files = glob.glob(f'{cases_path}/{company_type}/*_al.csv')
             n_fcm = len(al_files)
             flt = define_al_fuzzy()
             self.genes = []
             for i in range(1, n_fcm):
-                al = pd.read_csv(f'../cases/{company_type}/{i}_al.csv', header=None).values
+                al = pd.read_csv(f'{cases_path}/{company_type}/{i}_al.csv', header=None).values
                 for x in range(1, len(al)):
                     v_al = flt.get_value(al[x][0])
                     self.genes.append(v_al)
@@ -173,10 +176,10 @@ class ALGE_class():
     # compute the number of genes in the FCM
     def compute_individual_size():
         individual_size = 0
-        files = glob.glob("model/*_wm.csv")
+        files = glob.glob(f"{model_path}/*_wm.csv")
         n_fcm = len(files)
         for i in range(1, n_fcm):
-            filename = f"model/{i}_wm.csv"
+            filename = f"{model_path}/{i}_wm.csv"
             with open(filename) as f:
                 line = f.readline()
                 individual_size += len(line.split(","))-1
@@ -248,6 +251,7 @@ if __name__ == "__main__":
                 results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
                 time_2 = time.time()
                 time_taken = time_2 - time_1
+                print(f"Time taken: {time_taken} sec")
 
                 # from the results_pop array, get the best individuals
                 best_individuals = []
@@ -255,7 +259,7 @@ if __name__ == "__main__":
                     best_individuals.append(pop.individuals[0])
 
                 # print the best individual
-                model_files = glob.glob(f'model/*_desc.json')
+                model_files = glob.glob(f'{model_path}/*_desc.json')
                 n_fcm = len(model_files)
                 if best:
                     best_best_individual = max(best_individuals, key=lambda x: x.algoritithm.result)
@@ -263,12 +267,12 @@ if __name__ == "__main__":
                     file_string = ""
                     for i in range(1, n_fcm):
                         fcm_desc = f"{i}_desc.json"
-                        with open(f'../model/{fcm_desc}') as json_file:
+                        with open(f'{model_path}/{fcm_desc}') as json_file:
                             data = json.load(json_file)
                             print(f"FCM {data['main']}")
                             file_string += f"FCM {data['main']}\n"
                             n_nodes = len(data['nodes'])
-                            with open(f'../cases/{company_type}/{i}_al.csv') as al_file:
+                            with open(f'{cases_path}/{company_type}/{i}_al.csv') as al_file:
                                 al = pd.read_csv(al_file, header=None).values
                                 for j in range(1, n_nodes):
                                     initial_al = al[j][0]
@@ -280,8 +284,8 @@ if __name__ == "__main__":
                                     file_string += f"\tNode {data['nodes'][str(j+1)]}\n"
                                     file_string += f"\t\tInitial AL:\t{initial_al}\n"
                                     file_string += f"\t\tFinal AL: \t{final_al}\n"
-                    #with open(f'results/{crossover_prob}_{retain}_{company_type}_best_results.txt', 'w') as file:
-                    #    file.write(file_string)
+                    with open(f'ga_results/{crossover_prob}_{retain}_{company_type}_best_results.txt', 'w') as file:
+                        file.write(file_string)
                 else:
                     for i in range(len(best_individuals)):
                         best_best_individual = best_individuals[i]
@@ -289,12 +293,12 @@ if __name__ == "__main__":
                         file_string = ""
                         for j in range(1, n_fcm):
                             fcm_desc = f"{j}_desc.json"
-                            with open(f'../model/{fcm_desc}') as json_file:
+                            with open(f'{model_path}/{fcm_desc}') as json_file:
                                 data = json.load(json_file)
                                 print(f"FCM {data['main']}")
                                 file_string += f"FCM {data['main']}\n"
                                 n_nodes = len(data['nodes'])
-                                with open(f'../cases/{company_type}/{j}_al.csv') as al_file:
+                                with open(f'{cases_path}/{company_type}/{j}_al.csv') as al_file:
                                     al = pd.read_csv(al_file, header=None).values
                                     for k in range(1, n_nodes):
                                         initial_al = al[k][0]
@@ -306,15 +310,13 @@ if __name__ == "__main__":
                                         file_string += f"\tNode {data['nodes'][str(k+1)]}\n"
                                         file_string += f"\t\tInitial AL:\t{initial_al}\n"
                                         file_string += f"\t\tFinal AL: \t{final_al}\n"
-                        #with open(f'results/{crossover_prob}_{retain}_{company_type}_best_{i}_results.txt', 'w') as file:
-                        #    file.write(file_string)
-                
+                        with open(f'ga_results/cro_{crossover_prob}_ret{retain}_ct_{company_type}_best_{i}_results.txt', 'w') as file:
+                            file.write(file_string)
                 print()
-
                 result_retain[company_type] = (results, results_pop, results_gen, best_individuals, time_taken)
             result_cross[retain] = result_retain
         results_tot[crossover_prob] = result_cross
 
     # save the results into pickle file
-    with open('results/results.pkl', 'wb') as f:
+    with open('ga_results/results.pkl', 'wb') as f:
         pickle.dump(results_tot, f)

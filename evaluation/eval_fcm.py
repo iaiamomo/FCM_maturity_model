@@ -7,6 +7,9 @@ import copy
 from utils.FLT_class import *
 import pandas as pd
 
+model_path = "../model"
+cases_path = "../cases"
+
 class FCM:
 
     def __init__(self, n_fcm, iterations, company_type, flt, new_values=[]):
@@ -23,8 +26,8 @@ class FCM:
         self.desc_graphs = []
         for i in range(self.n_fcm):
             # get weights and activation levels from csv files 
-            ww = np.genfromtxt(f'../model/{i}_wm.csv', delimiter=',')
-            al = pd.read_csv(f'../cases/{company_type}/{i}_al.csv', header=None).values
+            ww = np.genfromtxt(f'{model_path}/{i}_wm.csv', delimiter=',')
+            al = pd.read_csv(f'{cases_path}/{company_type}/{i}_al.csv', header=None).values
 
             if len(new_values) > 0:
                 # modify activation levels based on genes
@@ -37,7 +40,7 @@ class FCM:
             h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1, self.al_flt)
 
             # get description of the graph
-            desc = json.load(open(f'../model/{i}_desc.json'))
+            desc = json.load(open(f'{model_path}/{i}_desc.json'))
             desc_main = desc['main']
             desc_nodes = desc['nodes']
             desc_nodes_list.append(desc_nodes)

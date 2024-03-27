@@ -6,8 +6,9 @@ from random import randint
 import copy
 from utils.FLT_class import *
 import pandas as pd
-import sys
-import os
+
+model_path = "../model"
+cases_path = "../cases"
 
 class FCM:
 
@@ -26,8 +27,8 @@ class FCM:
         idx_new_values = 0
         for i in range(self.n_fcm):
             # get weights and activation levels from csv files 
-            ww = np.genfromtxt(f'../model/{i}_wm.csv', delimiter=',')
-            al = pd.read_csv(f'../cases/{company_type}/{i}_al.csv', header=None).values
+            ww = np.genfromtxt(f'{model_path}/{i}_wm.csv', delimiter=',')
+            al = pd.read_csv(f'{cases_path}/{company_type}/{i}_al.csv', header=None).values
 
             # if doing genetic algorithm, change the activation levels
             if len(new_values) > 0:
@@ -45,7 +46,7 @@ class FCM:
             h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1, self.al_flt, new_values)
 
             # get description of the graph
-            desc = json.load(open(f'../model/{i}_desc.json'))
+            desc = json.load(open(f'{model_path}/{i}_desc.json'))
             desc_main = desc['main']
             desc_nodes = desc['nodes']
             desc_nodes_list.append(desc_nodes)

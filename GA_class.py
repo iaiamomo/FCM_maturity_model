@@ -56,6 +56,7 @@ class Population(object):
         self.retain = retain
         self.target_val = target_val
         self.fitness_history = []
+        self.ind_fitness_history = []
         self.parents = []
         self.elite = []
         self.done = False
@@ -78,13 +79,14 @@ class Population(object):
 
         # sort individuals by fitness (lower fitness it better in this case)
         self.individuals = sorted(self.individuals, key=lambda x: x.fitness())  # here x.fitness() does not run the FCM algorithm
+        self.ind_fitness_history.append(self.individuals[0].fitness_val)
 
         # set done to True if the target value is reached or if the fitness is too low
         if pop_fitness < 0.03 or self.individuals[0].fitness_val==0 or self.individuals[0].fitness_val < 0.03:
             self.done = True
 
         if generation is not None:
-            print(f"Generation: {generation}, Population fitness: {pop_fitness}, Fitness sum: {fitness_sum}")
+            print(f"Generation: {generation}, Population fitness: {pop_fitness}, Fitness sum: {fitness_sum}, Best individual fitness: {self.individuals[0].fitness_val}")
 
 
     # select the fittest individuals (elitist selection) to be the parents of next generation (lower fitness it better in this case)
@@ -125,6 +127,10 @@ class Population(object):
             dic_genes = {i: x.genes[i] for i in range(len(x.genes))}
             # get the position of the lower gene value
             mutate_index = min(dic_genes, key=dic_genes.get)
+            to_mutate = x.genes[mutate_index]
+            dic_genes_to_mutate = {i: x.genes[i] for i in range(len(x.genes)) if x.genes[i] == to_mutate}
+            # get a random position to mutate
+            mutate_index = random.choice(list(dic_genes_to_mutate.keys()))
             # mutate the gene to a random value greater than the current value
             new_value = np.random.randint(1,10)/10
             old_value = x.genes[mutate_index]
@@ -167,7 +173,7 @@ class Algorithm(object):
         self.result = fcm_obj.final_activation_level
 
 
-class ALGE_class():
+class ALGA_class():
 
     # compute the number of genes in the FCM
     def compute_individual_size():
@@ -185,7 +191,7 @@ class ALGE_class():
     # execute the what-if analysis of the FCM
     def what_if(n_runs, pop_size, generation, retain, target_val, company_type):
         # FCM parameters    
-        individual_size = ALGE_class.compute_individual_size()
+        individual_size = ALGA_class.compute_individual_size()
 
         results = []
         results_pop = []
@@ -196,7 +202,7 @@ class ALGE_class():
             for x in range(generation):
                 pop.grade(generation = x)
                 if pop.done or x == generation - 1: # if target value is reached or if we reached the last generation
-                    print(f"\tSimulation: {k} Finished at generation: {x}, Population fitness: {pop.fitness_history[-1]}")
+                    print(f"\tSimulation: {k} Finished at generation: {x}, Population fitness: {pop.fitness_history[-1]}, Individual fitness: {pop.ind_fitness_history[-1]}")
                     break
                 pop.evolve()
 
@@ -208,20 +214,35 @@ class ALGE_class():
         return results, results_pop, results_gen
 
 
-    def visualize(results, results_pop, results_gen, target_val):
+    def visualize(results, results_pop, company_type):
+        plt.figure(f"fitness_{company_type}")
+        max_generations = max([len(pop.fitness_history) for pop in results_pop])
         for i in range(len(results)):
-            al_ = results[i]
             pop_ = results_pop[i]
-            gen_ = results_gen[i]
-            
             # Plot fitness history
-            print("Showing fitness history graph")
-            plt.plot(np.arange(len(pop_.fitness_history)), pop_.fitness_history, label=f'Sim: {i}')
-
+            plt.plot(np.arange(len(pop_.ind_fitness_history)), pop_.ind_fitness_history, label=f'Run: {i}')
         plt.ylabel('Fitness')
         plt.xlabel('Generations')
-        plt.title(f'Target Value: {target_val}')
+        plt.xticks(np.arange(0, max_generations, 2))
         plt.legend()
+        plt.grid()
+        plt.title("Fitness of the best individuals")
+        plt.show(block=False)
+
+        plt.figure("pop_fitness")
+        max_generations = max([len(pop.fitness_history) for pop in results_pop])
+        for i in range(len(results)):
+            pop_ = results_pop[i]
+            # Plot fitness history
+            plt.plot(np.arange(len(pop_.fitness_history)), pop_.fitness_history, label=f'Run: {i}')
+        plt.ylabel('Pop Fitness')
+        plt.xlabel('Generations')
+        plt.xticks(np.arange(0, max_generations, 2))
+        plt.legend()
+        plt.grid()
+        plt.title("Fitness of the population")
+        plt.show(block=False)
+
 
 
 if __name__ == "__main__":
@@ -229,7 +250,7 @@ if __name__ == "__main__":
     if len(argv) < 3 or len(argv) > 4:
         print("Usage: python GA_class.py <target_value> <case_name>")
         company_type = 'low'
-        target_val = 0.8
+        target_val = "H"
         #sys.exit(1)
     else:
         target_val = argv[1]
@@ -239,10 +260,8 @@ if __name__ == "__main__":
             print(f"Case {company_type} not found")
             sys.exit(1)
         # check if the target value is a float
-        try:
-            target_val = float(target_val)
-        except ValueError:
-            print(f"Target value {target_val} is not a float")
+        if target_val not in ['VL', 'L', 'M', 'H', 'VH']:
+            print(f"Target value {target_val} not found")
             sys.exit(1)
 
     # genetic algorithm parameters
@@ -253,37 +272,38 @@ if __name__ == "__main__":
     retain = 15  # percentage of fittest individuals to be kept as parents for next generation (elitist selection)
     flt = FLT_class.define_al_fuzzy()
 
-    results, results_pop, results_gen = ALGE_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
+    target_val = flt.get_value(target_val)
+
+    results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
 
     # from the results_pop array, get the best individual
     best_individuals = []
     for pop in results_pop:
         best_individuals.append(pop.individuals[0])
 
-    #TODO: chose if print the best individual or all the best individuals
     # print the best individual
-    best_best_individual = max(best_individuals, key=lambda x: x.algoritithm.result)
-    print(f"Best individual: {best_best_individual.genes}")
     model_files = glob.glob(f'model/*_desc.json')
     n_fcm = len(model_files)
-    idx_best_individual = 0
-    for i in range(1, n_fcm):
-        fcm_desc = f"{i}_desc.json"
-        with open(f'model/{fcm_desc}') as json_file:
-            data = json.load(json_file)
-            print(f"FCM {data['main']}")
-            n_nodes = len(data['nodes'])
-            with open(f'cases/{company_type}/{i}_al.csv') as al_file:
-                al = pd.read_csv(al_file, header=None).values
-                for j in range(1, n_nodes):
-                    initial_al = al[j][0]
-                    final_al = flt.get_linguisitic_term(best_best_individual.genes[idx_best_individual])
-                    idx_best_individual += 1
-                    print(f"\tNode {data['nodes'][str(j+1)]}")
-                    print(f"\t\tInitial AL:\t{initial_al}")
-                    print(f"\t\tFinal AL: \t{final_al}")
+    for i in range(len(best_individuals)):
+        best_best_individual = best_individuals[i]
+        idx_best_individual = 0
+        for j in range(1, n_fcm):
+            fcm_desc = f"{j}_desc.json"
+            with open(f'model/{fcm_desc}') as json_file:
+                data = json.load(json_file)
+                print(f"FCM {data['main']}")
+                n_nodes = len(data['nodes'])
+                with open(f'cases/{company_type}/{j}_al.csv') as al_file:
+                    al = pd.read_csv(al_file, header=None).values
+                    for k in range(1, n_nodes):
+                        initial_al = al[k][0]
+                        final_al = flt.get_linguisitic_term(best_best_individual.genes[idx_best_individual])
+                        idx_best_individual += 1
+                        print(f"\tNode {data['nodes'][str(k+1)]}")
+                        print(f"\t\tInitial AL:\t{initial_al}")
+                        print(f"\t\tFinal AL: \t{final_al}")
 
     # visualize the results
-    ALGE_class.visualize(results, results_pop, results_gen, target_val)
+    ALGA_class.visualize(results, results_pop, company_type)
 
     plt.show()

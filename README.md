@@ -54,8 +54,8 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
     L,0
     M,0
     ```
-    To check the technologies linked to each node, have a look at the `.json` files in [model](model).\
-- Put the new created files in the folder you created previously.
+    To check the technologies linked to each node, have a look at the `.json` files in [model](model).
+- Put the new files (there should be 6 new files) in the folder you created previously.
 
 ### How to run the experiments
 
@@ -79,3 +79,6 @@ In order to plot and run results of the GA analysis:
 cd evaluation
 python eval_ga.py
 ```
+
+## License
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

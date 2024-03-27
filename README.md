@@ -7,7 +7,9 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
 
 ## Getting Started
 
-- Create a new [conda](https://docs.anaconda.com/free/miniconda/) environment:
+- Install [Miniconda](https://docs.anaconda.com/free/miniconda/) or [Anaconda](https://www.anaconda.com/download) if you haven't already.
+
+- Create a new conda environment:
     ```shell
     conda create -n pyfcm python=3.10
     conda activate pyfcm
@@ -20,17 +22,24 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
 
 ## Run the code
 
+- Activate the conda environment:
+    ```shell
+    conda activate pyfcm
+    ```
+
 - Define the activation levels (AL) of each technology (node) inside the [cases](cases) folder - [follow below instructions](#define-al-for-a-new-case). Or use one of the cases already available `[low, medium, high, mix]`.
 
 - To run the FCM (inference analysis) you need to pass the `<case_name>` as argument:
     ```shell
     python FCM_class.py <case_name>
     ```
+    As an example try with `python FCM_class.py low`.
 
 - To run what-if analysis (genetic algorithm) you need to pass the `<target_value>` you want to reach (use `[VL, L, M, H, VH] = [neutral, very low, low, medium, high, very high]`) and the `<case_name>` as arguments:
     ```shell
     python GA_class.py <target_value> <case_name>
     ```
+    As an example try with `python GA_class.py H low`.
 
 ### Define AL for a new case
 

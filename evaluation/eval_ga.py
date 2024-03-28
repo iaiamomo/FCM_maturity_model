@@ -301,7 +301,7 @@ if __name__ == "__main__":
                             file_string += f"\tNode {data['nodes'][str(k+1)]}\n"
                             file_string += f"\t\tInitial AL:\t{initial_al}\n"
                             file_string += f"\t\tFinal AL: \t{final_al}\n"
-            with open(f'ct_{company_type}_best_{i}_results.txt', 'w') as file:
+            with open(f'ga_results/{company_type}_best_{i}_results.txt', 'w') as file:
                 file.write(file_string)
 
         results_tot[company_type] = (results, results_pop, results_gen, time_taken)

@@ -1,0 +1,9 @@
+Final,IIoT,Cloud Services,"AI,CV,PM,RPA",Cyber Security,Robotics,AR/VR,Digital Twin,DM & BI
+IIoT,,,"low,medium",Medium,"medium,medium,medium",medium,"high,high","high,high,medium"
+Cloud Services,high,,Medium,,low,low,medium,"medium,medium"
+"AI,CV,PM,RPA",,,,,"medium,medium","low,low","low,medium","high,medium"
+Cyber Security,"medium,high",high,medium,,"medium,low",,low,"medium,medium"
+Robotics,"medium,medium",,medium,medium,,low,medium,"high,high"
+AR/VR,,,,,low,,"low,high",high
+Digital Twin,high,,medium,low,low,high,,"high,medium"
+DM & BI,,,medium,"medium,medium",,,medium,

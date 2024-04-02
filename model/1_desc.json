@@ -10,5 +10,6 @@
         "7": "Digital Twin",
         "8": "DM, BI"
     },
+    "weight": 1,
     "layer": 2
 }

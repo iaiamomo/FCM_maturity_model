@@ -62,9 +62,6 @@ class StaticAnalysis:
             res = []
             idx_deg = sorted_degree[0][0]
             value_deg = sorted_degree[0][1]
-            if idx_deg == 0:
-                idx_deg = sorted_degree[1][0]
-                value_deg = sorted_degree[1][1]
             name_idx_deg = self.description[i]['nodes'][str(idx_deg+1)]
             res.append((idx_deg, name_idx_deg, value_deg))
             for j in range(len(sorted_degree)):
@@ -81,9 +78,6 @@ class StaticAnalysis:
             res = []
             idx_val = sorted_val[0][0]
             value_val = sorted_val[0][1]
-            if idx_val == 0:
-                idx_val = sorted_val[1][0]
-                value_val = sorted_val[1][1]
             name_idx_val = self.description[i]['nodes'][str(idx_val+1)]
             res.append((idx_val, name_idx_val, value_val))
             for j in range(len(sorted_val)):
@@ -101,18 +95,24 @@ class StaticAnalysis:
     
     def print_dict(self, d):
         for i in d:
-            if i == 0:
-                continue
-            print(f"\tFCM {i} - {self.description[i]['main']}: {d[i]}")
+            print(f"\tFCM {i+1} - {self.description[i]['main']}: {d[i]}")
         
 
 if __name__ == "__main__":
     c = "low"
+    
+    lambdas = {
+        1: 0.83,
+        2: 0.85,
+        3: 0.81,
+        4: 0.91,
+        5: 0.735
+    }
 
-    n_fcm = 6
+    n_fcm = 5
     iterations = 100
     flt = define_wm_fuzzy()
-    fcm_obj = FCM(n_fcm, iterations, c, flt)
+    fcm_obj = FCM(n_fcm, iterations, lambdas, c, flt)
 
     sa = StaticAnalysis(fcm_obj.model, fcm_obj.desc_graphs)
 

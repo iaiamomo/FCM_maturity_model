@@ -13,10 +13,10 @@ FCM CAD, CAM, PLM
 		Final AL: 	H
 	Node AR, VR
 		Initial AL:	M
-		Final AL: 	M
+		Final AL: 	VH
 	Node Digital Twin
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 	Node DM, BI
 		Initial AL:	L
 		Final AL: 	VH
@@ -35,14 +35,14 @@ FCM CRM
 		Final AL: 	VH
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	VH
 	Node DM, BI
 		Initial AL:	M
-		Final AL: 	M
+		Final AL: 	VH
 FCM ERP, SCM
 	Node IIoT
 		Initial AL:	M
-		Final AL: 	M
+		Final AL: 	VH
 	Node Cloud Services
 		Initial AL:	H
 		Final AL: 	H
@@ -57,20 +57,20 @@ FCM ERP, SCM
 		Final AL: 	M
 	Node AR, VR
 		Initial AL:	M
-		Final AL: 	M
+		Final AL: 	H
 	Node Digital Twin
 		Initial AL:	M
 		Final AL: 	M
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 FCM WMS, TMS
 	Node IIoT
 		Initial AL:	M
 		Final AL: 	M
 	Node Cloud Services
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	M
 	Node AI, CV, PM, RPA
 		Initial AL:	M
 		Final AL: 	M
@@ -82,13 +82,13 @@ FCM WMS, TMS
 		Final AL: 	M
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	H
 	Node Digital Twin
 		Initial AL:	L
 		Final AL: 	VH
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	VH
 FCM MES
 	Node IIoT
 		Initial AL:	M
@@ -104,7 +104,7 @@ FCM MES
 		Final AL: 	M
 	Node Robotics
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	H
 	Node AR, VR
 		Initial AL:	H
 		Final AL: 	H

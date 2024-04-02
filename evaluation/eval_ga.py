@@ -1,13 +1,13 @@
+from utils.FCM_class import FCM
+from utils.FLT_class import *
 import numpy as np
 import matplotlib.pyplot as plt
-import random
-from utils.FCM_class import FCM
-import glob
-from utils.FLT_class import *
 import pandas as pd
 import json
 import pickle
 import time
+import random
+import glob
 
 model_path = "../model"
 cases_path = "../cases"
@@ -166,15 +166,21 @@ class Algorithm(object):
     def __init__(self, genes=[], company_type='low'):
         flt = define_al_fuzzy()
 
-        n_fcm = 6   # number of sub-fcms
-        lambda_value = 0.79  # lambda value
+        n_fcm = 5   # number of sub-fcms
+        lambdas = {
+            1: 0.83,
+            2: 0.85,
+            3: 0.81,
+            4: 0.91,
+            5: 0.735
+        }
         iterations = 100  # number of iterations
         threshold = 0.001    # threshold
 
-        fcm_obj = FCM(n_fcm, iterations, company_type, flt, genes)
-        fcm_obj.run_fcm(lambda_value, threshold)
+        fcm_obj = FCM(n_fcm, iterations, lambdas, company_type, flt, genes)
+        fcm_obj.run_fcm(threshold)
         #fcm_obj.print_results(flt)
-        self.result = fcm_obj.final_activation_level
+        self.result = fcm_obj.main_final_al
 
 
 class ALGA_class():

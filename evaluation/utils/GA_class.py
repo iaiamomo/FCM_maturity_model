@@ -5,9 +5,6 @@ from utils.FCM_class import FCM
 import glob
 from utils.FLT_class import *
 import pandas as pd
-import json
-import os
-import sys
 
 model_path = "../model"
 cases_path = "../cases"

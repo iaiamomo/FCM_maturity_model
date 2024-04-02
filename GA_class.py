@@ -9,18 +9,21 @@ import json
 import os
 import sys
 
+model_path = "model"
+cases_path = "cases"
+
 # class representing an individual in the population
 # in this case an individual is a FCM (activation levels of the nodes)
 class Individual(object):
 
-    def __init__(self, genes=None, target_val=0.6, individual_id = None, company_type='low'):
+    def __init__(self, genes=None, target_val=0.6, individual_id = None, company_type='low', to_remove=[]):
         if genes is None:
-            al_files = glob.glob(f'cases/{company_type}/*_al.csv')
+            al_files = glob.glob(f'{cases_path}/{company_type}/*_al.csv')
             n_fcm = len(al_files)
             flt = FLT_class.define_al_fuzzy()
             self.genes = []
             for i in range(1, n_fcm):
-                al = pd.read_csv(f'cases/{company_type}/{i}_al.csv', header=None).values
+                al = pd.read_csv(f'{cases_path}/{company_type}/{i}_al.csv', header=None).values
                 for x in range(1, len(al)):
                     v_al = flt.get_value(al[x][0])
                     self.genes.append(v_al)
@@ -29,18 +32,19 @@ class Individual(object):
             self.genes = genes
         self.target_val = target_val
         self.fitness_val = 0
-        self.algoritithm = None
+        self.algorithm = None
         self.company_type = company_type
+        self.to_remove = to_remove
 
     # Returns fitness of individual
     # Fitness is the difference between target value and the calculated value
     def fitness(self, run=False, generation=None):
         if run==True:
             if generation == 0:
-                self.algoritithm = Algorithm(company_type=self.company_type)  # run the FCM algorithm
+                self.algorithm = Algorithm(company_type=self.company_type, to_remove=self.to_remove)  # run the FCM algorithm
             else:
-                self.algoritithm = Algorithm(genes=self.genes, company_type=self.company_type)  # run the FCM algorithm
-            computed_objective = self.algoritithm.result
+                self.algorithm = Algorithm(genes=self.genes, company_type=self.company_type, to_remove=self.to_remove)  # run the FCM algorithm
+            computed_objective = self.algorithm.result
             self.fitness_val = round(abs(self.target_val - computed_objective), 3)
         return self.fitness_val
 
@@ -49,7 +53,7 @@ class Individual(object):
 # in this case the population is an evolving set of individuals (FCMs with different activation levels)
 class Population(object):
 
-    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low'):
+    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low', to_remove=[]):
         self.pop_size = pop_size
         self.individuals_size = individual_size
         self.crossover_prob = crossover_prob
@@ -59,12 +63,13 @@ class Population(object):
         self.ind_fitness_history = []
         self.parents = []
         self.elite = []
+        self.to_remove = to_remove
         self.done = False
 
         # Create individuals
         self.individuals : list[Individual] = []
         for x in range(pop_size):
-            self.individuals.append(Individual(genes=None, target_val=self.target_val, individual_id=x, company_type=company_type))
+            self.individuals.append(Individual(genes=None, target_val=self.target_val, individual_id=x, company_type=company_type, to_remove=to_remove))
 
 
     # Grade the generation by getting the average fitness of its individuals
@@ -111,10 +116,10 @@ class Population(object):
                 if self.crossover_prob > np.random.rand():
                     idx_crossover = np.random.randint(0, len(father.genes))
                     child_genes = father.genes[:idx_crossover] + mother.genes[idx_crossover:]
-                    child = Individual(genes=child_genes, target_val=self.target_val)
+                    child = Individual(genes=child_genes, target_val=self.target_val, to_remove=self.to_remove)
                     children.append(child)
                     child_genes = mother.genes[:idx_crossover] + father.genes[idx_crossover:]
-                    child = Individual(genes=child_genes, target_val=self.target_val)
+                    child = Individual(genes=child_genes, target_val=self.target_val, to_remove=self.to_remove)
                     children.append(child)
             children = children[:target_children_size]
             self.individuals = children
@@ -158,30 +163,37 @@ class Population(object):
 
 # class representing the FCM algorithm
 class Algorithm(object):
-    
-    def __init__(self, genes=[], company_type='low'):
+
+    def __init__(self, genes=[], company_type='low', to_remove=[]):
         flt = FLT_class.define_al_fuzzy()
 
-        n_fcm = 6   # number of sub-fcms
-        lambda_value = 0.79  # lambda value
+        n_fcm = 5   # number of sub-fcms
+        lambdas = {
+            1: 0.83,
+            2: 0.85,
+            3: 0.81,
+            4: 0.91,
+            5: 0.735
+        }
         iterations = 100  # number of iterations
         threshold = 0.001    # threshold
 
-        fcm_obj = FCM(n_fcm, iterations, company_type, flt, genes)
-        fcm_obj.run_fcm(lambda_value, threshold)
-        #fcm_obj.print_results(flt)
-        self.result = fcm_obj.final_activation_level
+        fcm_obj = FCM(n_fcm, iterations, lambdas, company_type, flt, genes, to_remove)
+        fcm_obj.run_fcm(threshold)
+        self.result = fcm_obj.main_final_al
 
 
 class ALGA_class():
 
     # compute the number of genes in the FCM
-    def compute_individual_size():
+    def compute_individual_size(to_remove):
         individual_size = 0
-        files = glob.glob("model/*_wm.csv")
+        files = glob.glob(f"{model_path}/*_wm.csv")
         n_fcm = len(files)
         for i in range(1, n_fcm):
-            filename = f"model/{i}_wm.csv"
+            if i in to_remove:
+                continue
+            filename = f"{model_path}/{i}_wm.csv"
             with open(filename) as f:
                 line = f.readline()
                 individual_size += len(line.split(","))-1
@@ -189,16 +201,16 @@ class ALGA_class():
 
 
     # execute the what-if analysis of the FCM
-    def what_if(n_runs, pop_size, generation, retain, target_val, company_type):
-        # FCM parameters    
-        individual_size = ALGA_class.compute_individual_size()
+    def what_if(n_runs, pop_size, generation, retain, target_val, company_type, to_remove):
+        # FCM parameters
+        individual_size = ALGA_class.compute_individual_size(to_remove)
 
         results = []
         results_pop = []
         results_gen = []
         for k in range(n_runs):
-            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type)
-        
+            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type, to_remove=to_remove)
+
             for x in range(generation):
                 pop.grade(generation = x)
                 if pop.done or x == generation - 1: # if target value is reached or if we reached the last generation
@@ -246,23 +258,18 @@ class ALGA_class():
 
 
 if __name__ == "__main__":
-    argv = sys.argv
-    if len(argv) < 3 or len(argv) > 4:
-        print("Usage: python GA_class.py <target_value> <case_name>")
-        company_type = 'low'
-        target_val = "H"
-        #sys.exit(1)
-    else:
-        target_val = argv[1]
-        company_type = argv[2]
-        # check if there exists a folder with the name of the case in the cases folder
-        if company_type not in os.listdir("cases"):
-            print(f"Case {company_type} not found")
-            sys.exit(1)
-        # check if the target value is a float
-        if target_val not in ['VL', 'L', 'M', 'H', 'VH']:
-            print(f"Target value {target_val} not found")
-            sys.exit(1)
+    config = json.load(open("config.json"))
+    to_remove = config['to_remove']
+    company = config['case']
+    target_val = config['target_val']
+
+    idx_to_remove = []
+    desc_files = glob.glob(f"{model_path}/*.json")
+    for i in range(len(desc_files)):
+        file_to_open = desc_files[i]
+        data = json.load(open(file_to_open))
+        if data['main'] in to_remove:
+            idx_to_remove.append(i)
 
     # genetic algorithm parameters
     n_runs = 5  # number of simulations
@@ -274,7 +281,7 @@ if __name__ == "__main__":
 
     target_val = flt.get_value(target_val)
 
-    results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
+    results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company, idx_to_remove)
 
     # from the results_pop array, get the best individual
     best_individuals = []
@@ -282,18 +289,18 @@ if __name__ == "__main__":
         best_individuals.append(pop.individuals[0])
 
     # print the best individual
-    model_files = glob.glob(f'model/*_desc.json')
+    model_files = glob.glob(f'{model_path}/*_desc.json')
     n_fcm = len(model_files)
     for i in range(len(best_individuals)):
         best_best_individual = best_individuals[i]
         idx_best_individual = 0
         for j in range(1, n_fcm):
             fcm_desc = f"{j}_desc.json"
-            with open(f'model/{fcm_desc}') as json_file:
+            with open(f'{model_path}/{fcm_desc}') as json_file:
                 data = json.load(json_file)
                 print(f"FCM {data['main']}")
                 n_nodes = len(data['nodes'])
-                with open(f'cases/{company_type}/{j}_al.csv') as al_file:
+                with open(f'{cases_path}/{company}/{j}_al.csv') as al_file:
                     al = pd.read_csv(al_file, header=None).values
                     for k in range(1, n_nodes):
                         initial_al = al[k][0]
@@ -304,6 +311,6 @@ if __name__ == "__main__":
                         print(f"\t\tFinal AL: \t{final_al}")
 
     # visualize the results
-    ALGA_class.visualize(results, results_pop, company_type)
+    ALGA_class.visualize(results, results_pop, company)
 
     plt.show()

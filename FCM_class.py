@@ -6,60 +6,71 @@ from random import randint
 import copy
 import FLT_class
 import pandas as pd
-import sys
-import os
+import glob
+
+model_path = "model"
+cases_path = "cases"
+colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 
 class FCM:
 
-    def __init__(self, n_fcm, iterations, company_type, flt, new_values=[]):
+    def __init__(self, n_fcm, iterations, lambdas, company_type, flt, new_values=[], to_remove=[]):
         self.n_fcm = n_fcm
         self.iterations = iterations
         self.al_flt = flt
-        self.model : list[nx.DiGraph] = self.build_model(company_type, new_values)
+        self.lambdas = lambdas
+        self.model : dict[nx.DiGraph] = self.build_model(company_type, new_values=new_values, to_remove=to_remove)
 
 
-    def build_model(self, company_type, new_values=[]):
+    def build_model(self, company_type, new_values=[], to_remove=[]):
         "Build the FCM model"
-        graph_list = []
-        desc_nodes_list = []
-        self.desc_graphs = []
+        graph_list = {}
+        self.desc_graphs = {}
+        self.weights_nodes = {}
         idx_new_values = 0
-        for i in range(self.n_fcm):
+
+        self.idx_to_remove = []
+        desc_files = glob.glob(f"{model_path}/*.json")
+        for i in range(len(desc_files)):
+            file_to_open = desc_files[i]
+            data = json.load(open(file_to_open))
+            if data['main'] in to_remove:
+                self.idx_to_remove.append(i)
+                self.lambdas.pop(i)
+
+        for idx in range(1, self.n_fcm+1):
+            if idx in self.idx_to_remove:
+                continue
+
             # get weights and activation levels from csv files 
-            ww = np.genfromtxt(f'model/{i}_wm.csv', delimiter=',')
-            al = pd.read_csv(f'cases/{company_type}/{i}_al.csv', header=None).values
+            ww = np.genfromtxt(f'{model_path}/{idx}_wm.csv', delimiter=',')
+            al = pd.read_csv(f'{cases_path}/{company_type}/{idx}_al.csv', header=None).values
 
             # if doing genetic algorithm, change the activation levels
             if len(new_values) > 0:
-                if i == 0:  # if main concept set to 0
-                    for x in range(len(al)):
-                        al[x][0] = 0
-                else:   # if sub-concepts
-                    # modify activation levels based on genes, change only the technologies (not the main concept)
-                    al[0][0] = 0
-                    for x in range(1, len(al)):    # x is the row index
-                        al[x][0] = new_values[idx_new_values]
-                        idx_new_values+=1
+                # modify activation levels based on genes, change only the technologies (not the main concept)
+                al[0][0] = 0
+                for x in range(1, len(al)):    # x is the row index
+                    al[x][0] = new_values[idx_new_values]
+                    idx_new_values+=1
 
             # create graph from weights and activation levels
-            h = FCM.fcm_from_matrix_to_graph(ww, al, 0, self.iterations+1, self.al_flt, new_values)
+            h = FCM.fcm_from_matrix_to_graph(ww, al, self.iterations+1, self.al_flt, new_values)
 
             # get description of the graph
-            desc = json.load(open(f'model/{i}_desc.json'))
-            desc_main = desc['main']
-            desc_nodes = desc['nodes']
-            desc_nodes_list.append(desc_nodes)
-            self.desc_graphs.append(desc)
+            desc = json.load(open(f'{model_path}/{idx}_desc.json'))
+            self.desc_graphs[idx] = desc
+            self.weights_nodes[idx] = desc['weight']
 
-            graph_list.append(h)
+            graph_list[idx] = h
 
         return graph_list
 
 
     @staticmethod
-    def fcm_from_matrix_to_graph(ww, al, depth, iterations, flt : FLT_class.Fuzzy_Linguistic_Terms, new_values=[]):
+    def fcm_from_matrix_to_graph(ww, al, iterations, flt : FLT_class.Fuzzy_Linguistic_Terms, new_values=[]):
         "Create a graph based on a given matrix"
-        G = nx.DiGraph(depth=depth)
+        G = nx.DiGraph(depth=0)
         n = ww.shape[0]
 
         # nodes
@@ -82,65 +93,46 @@ class FCM:
                 if (ww[i][j] != 0): G.add_edge(i, j, weight = round(ww[i][j], 5))
 
         return G
-    
-    
-    @staticmethod
-    def draw(graph, description):
-        "Draw the graph"
-        pos = nx.spring_layout(graph)
-        colors = []
-        for i in range(len(graph.nodes)):
-            colors.append('#%06X' % randint(0, 0xFFFFFF))
-        nx.draw(graph, pos, with_labels=True, node_size=900, node_color=colors)
-        labels = nx.get_edge_attributes(graph, 'weight')
-        nx.draw_networkx_edge_labels(graph, pos, edge_labels=labels)
-
-        legend_labels = []
-        i = 0
-        for _, desc in description['nodes'].items():
-            legend_labels.append(plt.Circle((0, 0), 0.1, color=colors[i], label=f"{i}: {desc}"))
-            i+=1
-        plt.legend(handles=legend_labels, loc='upper left', title=description['main'])
-    
-        plt.show()
 
 
-    def run_fcm(self, lambda_value, threshold=0.001):
+    def run_fcm(self, threshold=0.001):
+        self.model_out = {}
         "Run the FCM algorithm"
-        graph_list, t = FCM.papageorgiou_alg_graph(self.model[:], g_index=0, start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value, threshold=threshold)
-
-        # refine the final activation level array
-        #print(f"FINISHED AT ITERATION {t}")
-        for i in range (len(graph_list)):
-            G = graph_list[i]
+        for key in self.model.keys():
+            lambda_value = self.lambdas[key]
+            G, t = FCM.papageorgiou_alg_graph(self.model[key], start_iter=1, end_iter=self.iterations+1, lambda_value=lambda_value, threshold=threshold)
             for n in range(len(G.nodes)):
                 G.nodes[n]['attr_dict']['value'] = G.nodes[n]['attr_dict']['value'][:t]
-            graph_list[i] = G
+            self.model_out[key] = G
+        max_iter = 0
+        for key in self.model_out.keys():
+            if len(self.model_out[key].nodes[0]['attr_dict']['value']) > max_iter:
+                max_iter = len(self.model_out[key].nodes[0]['attr_dict']['value'])
+        for key in self.model_out.keys():
+            if max_iter > len(self.model_out[key].nodes[0]['attr_dict']['value']):
+                for n in range(len(self.model_out[key].nodes)):
+                    idx_iter = len(self.model_out[key].nodes[n]['attr_dict']['value'])
+                    while idx_iter < max_iter:
+                        self.model_out[key].nodes[n]['attr_dict']['value'].append(self.model_out[key].nodes[n]['attr_dict']['value'][-1])
+                        idx_iter += 1
 
-        self.model_out = graph_list
-
-        # extract the final activation level from the final graph
-        n_main_concept = len(graph_list[0].nodes)-1
-        self.final_activation_level = graph_list[0].nodes[n_main_concept]['attr_dict']['value'][-1]
+        weight_mean = 0
+        n_elem = 0
+        for key in self.model_out.keys():
+            weight_mean += self.weights_nodes[key] * self.model_out[key].nodes[0]['attr_dict']['value'][-1]
+            n_elem += 1
+        self.main_final_al = weight_mean / n_elem
 
         return
 
 
     @staticmethod
-    def papageorgiou_alg_graph(graph_list, g_index, start_iter, end_iter, lambda_value, threshold=0.001):
+    def papageorgiou_alg_graph(graph, start_iter, end_iter, lambda_value, threshold=0.001):
         "E.I. Papageorgiou, 'A new methodology for Decisions in Medical Informatics using fuzzy cognitive maps based on fuzzy rule-extraction techniques', Applied Soft Computing, vol. 11, Issue 1, p.p. 500-513, 2011."
-        G = graph_list[g_index]
+        G = graph
 
         for t in range(start_iter,end_iter):    #for each iteration
             for node in G:  #for each node in the graph
-                # contribution of the linked node
-                # recursive call of the algorithm for the linked graph
-                if G.nodes[node]['attr_dict']['link'] > 0:
-                    node_attr_links = int(G.nodes[node]['attr_dict']['link'])
-                    graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t-1] = G.nodes[node]['attr_dict']['value'][t-1]
-                    graph_list, t = FCM.papageorgiou_alg_graph(graph_list, node_attr_links, t, t+1, lambda_value, threshold)
-                    G.nodes[node]['attr_dict']['value'][t-1] = graph_list[node_attr_links].nodes[0]['attr_dict']['value'][t]
-
                 # contribution of the incoming edges
                 b = 0
                 for edge in G.in_edges(node):
@@ -158,17 +150,11 @@ class FCM:
 
                 G.nodes[node]['attr_dict']['value'][t] = final_al
 
-                if g_index == 0:
-                    n_nodes = len(G.nodes)
-                    if node == n_nodes-1:
-                        if abs(G.nodes[node]['attr_dict']['value'][t] - G.nodes[node]['attr_dict']['value'][t-1]) < threshold:
-                            #print(f"Threshold reached at iteration {t}")
-                            #print(f"Node: {node}, Value: {G.nodes[node]['attr_dict']['value'][t]}, prev: {G.nodes[node]['attr_dict']['value'][t-1]}")
-                            graph_list[g_index] = G
-                            return graph_list, t
+                if node == 0:
+                    if abs(G.nodes[node]['attr_dict']['value'][t] - G.nodes[node]['attr_dict']['value'][t-1]) < threshold:
+                        return G, t
 
-        graph_list[g_index] = G
-        return graph_list, t
+        return G, t
 
 
     @staticmethod
@@ -179,13 +165,13 @@ class FCM:
 
     def print_weights_nodes(self):
         "Print the weights of the nodes of the final graph"
-        for i in range(len(self.desc_graphs)):
+        for key in self.model_out.keys():
             # grafo i-esimo
-            to_print = f"FCM {i}\n"
-            for n in range(len(self.model_out[i].nodes)):
+            to_print = f"FCM {self.desc_graphs[key]['main']}\n"
+            for n in range(len(self.model_out[key].nodes)):
                 # nodo n-esimo
-                to_print += f"\t{self.desc_graphs[i]['nodes'][str(n+1)]}:\t"
-                to_print += f"{self.model_out[i].nodes[n]['attr_dict']['value']}\n"
+                to_print += f"\t{self.desc_graphs[key]['nodes'][str(n+1)]}:\t"
+                to_print += f"{self.model_out[key].nodes[n]['attr_dict']['value']}\n"
                 pass
             print(to_print)
 
@@ -194,21 +180,23 @@ class FCM:
         "Extract the weights from the final graph"
         initial_activation_levels = []
         final_activation_level = []
-        for i in range(len(self.model_out)):
+        name_fcm = []
+        for key in self.model_out.keys():
             results_in = []
             results_out = []
-            for j in range(len(self.model_out[i].nodes)):
-                results_in.append(self.model_out[i].nodes[j]['attr_dict']['value'][0])
-                results_out.append(self.model_out[i].nodes[j]['attr_dict']['value'][-1])
+            for j in range(len(self.model_out[key].nodes)):
+                results_in.append(self.model_out[key].nodes[j]['attr_dict']['value'][0])
+                results_out.append(self.model_out[key].nodes[j]['attr_dict']['value'][-1])
             initial_activation_levels.append(results_in)
             final_activation_level.append(results_out)
-        return initial_activation_levels, final_activation_level
+            name_fcm.append(self.desc_graphs[key]['main'])
+        return initial_activation_levels, final_activation_level, name_fcm
 
 
     def print_results(self, flt):
         "Print the initial and final activation levels of the nodes in the final graph"
         print("Activation levels of nodes in the FCMs")
-        initial_activation_levels, final_activation_level = self.extract_weights()
+        initial_activation_levels, final_activation_level, name_fcm = self.extract_weights()
 
         ling_initial = copy.deepcopy(initial_activation_levels)
         ling_final = copy.deepcopy(final_activation_level)
@@ -218,83 +206,67 @@ class FCM:
                 ling_final[i][j] = flt.get_linguisitic_term(ling_final[i][j])
 
         for i in range(len(initial_activation_levels)):
-            print(f"FCM {i}")
+            print(f"FCM {name_fcm[i]}")
             print(f"\t Initial: {initial_activation_levels[i]}")
             print(f"\t\t  {ling_initial[i]}")
             print(f"\t Final: {final_activation_level[i]}")
             print(f"\t\t  {ling_final[i]}")
 
 
-    def plot_al_values(self):
-        "Plot the activation levels of the main node"
-        G_main = self.model_out[0]
-
-        len_nodes = len(G_main.nodes)
-        central_node = G_main.nodes[len_nodes-1]
-        y_values = central_node['attr_dict']['value']
-        x_values = range(len(y_values))
-        
-        plt.figure(figsize=(10, 5))
-        plt.plot(range(x_values), y_values)
-        plt.xlabel("Iterations")
-        plt.ylabel("Activation Level")
-        plt.title("Activation Level of Industry 4.0")
-        plt.grid(True)
-        plt.show(block=False)
-
-
-def plot_al_values_graphs(fcms : dict, companies, colors):
+def plot_al_values_graphs(models, company, colors):
     "Plot the activation levels of the main node of multiple FCM"
-    all_x = {}
-    all_y = {}
-    for lambda_ in fcms.keys():
-        fcm_objs : list[FCM] = fcms[lambda_]
+    plt.figure()
+    plt.grid()
+    n_iter = 100
+    idx_color = 0
+    for key in models.model_out.keys():
+        g = models.model_out[key]
+        y_val = g.nodes[0]['attr_dict']['value']
+        if len(y_val) < n_iter:
+            n_iter = len(y_val)
+        x_val = list(range(len(y_val)))
+        plt.plot(x_val, y_val, color=colors[idx_color], label=f"FCM {key}")
+        idx_color += 1
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.xlabel("Iterations")
+    plt.ylabel("Activation Level")
+    plt.title(f"Company {company}")
 
-        for i in range(len(companies)):
-            G = fcm_objs[i].model_out[0]
-            len_nodes = len(G.nodes)
-            cnt_node = G.nodes[len_nodes-1]
-            y_values = cnt_node['attr_dict']['value']
-            x_values = list(range(len(y_values)))
-
-            if i not in all_x.keys():
-                all_x[i] = []
-                all_y[i] = []
-            all_x[i].append(x_values)
-            all_y[i].append(y_values)
-
-    plt.figure(figsize=(10, 5))
-    lambdas = list(fcms.keys())
-    for i in range(len(companies)):
-        values_x = all_x[i]
-        plt.subplot(1, len(companies), i+1)
-        plt.grid(True)
-        for j in range(len(values_x)):
-            plt.plot(values_x[j], all_y[i][j], color=colors[j], label=f"λ {lambdas[j]}")
-        plt.ylim(0, 1)
-        plt.legend()
-        plt.xlabel("Iterations")
-        plt.ylabel("Activation Level")
-        plt.title(f"Company {companies[i]}")
+    idx_iter = 0
+    y_val_main = []
+    while idx_iter < n_iter:
+        y_val_mean = []
+        for key in models.model_out.keys():
+            g = models.model_out[key]
+            y_val_mean.append(g.nodes[0]['attr_dict']['value'][idx_iter])
+        y_val_main.append(np.mean(y_val_mean))
+        idx_iter += 1
+    plt.figure()
+    plt.plot(list(range(len(y_val_main))), y_val_main)
+    plt.title(f"Main Activation Level - Company {company}")
+    plt.ylim(0, 1)
+    plt.xlabel("Iterations")
+    plt.ylabel("Activation Level")
+    plt.grid()
 
     plt.show(block=False)
 
 
 def plot_sigmoid(lambda_values):
-    plt.figure(figsize=(8, 6))
+    plt.figure()
 
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-    colors = colors[:len(lambda_values)]
-
+    c_i = 0
     x = np.linspace(-5, 5, 100)
-    for i in range(len(lambda_values)):
+    for i in lambda_values:
         lambda_value = lambda_values[i]
         y = []
         for j in x:
             y.append(FCM.sigmoid(j, lambda_value))
-        plt.plot(x, y, color=colors[i], label=f'lambda = {lambda_value}')
-        plt.axvline(x=-lambda_value, linestyle='--', color=colors[i])
-        plt.axvline(x=lambda_value, linestyle='--', color=colors[i])
+        plt.plot(x, y, color=colors[c_i], label=f'lambda = {lambda_value}')
+        plt.axvline(x=-lambda_value, linestyle='--', color=colors[c_i])
+        plt.axvline(x=lambda_value, linestyle='--', color=colors[c_i])
+        c_i += 1
 
     plt.title(f'Sigmoid Function')
     plt.xlabel('x')
@@ -307,19 +279,9 @@ def plot_sigmoid(lambda_values):
 
 
 if __name__ == "__main__":
-    argv = sys.argv
-    if len(argv) < 2 or len(argv) > 3:
-        print("Usage: python FCM_class.py <case_name>")
-        companies = ["low", "medium", "high"]   # AL file type of sub-fcms
-        #sys.exit(1)
-    else:
-        case_name = argv[1]
-        # check if there exists a folder with the name of the case in the cases folder
-        if case_name not in os.listdir("cases"):
-            print(f"Case {case_name} not found")
-            sys.exit(1)
-        else:
-            companies = [case_name]
+    config = json.load(open("config.json"))
+    to_remove = config['to_remove']
+    company = config['case']
 
     flt = FLT_class.define_al_fuzzy()
     flt.plot_triangle()
@@ -327,7 +289,7 @@ if __name__ == "__main__":
     flt2 = FLT_class.define_wm_fuzzy()
     flt2.plot_triangle()
 
-    n_fcm = 6   # number of sub-fcms
+    n_fcm = 5   # number of sub-fcms
     iterations = 100  # number of iterations
     threshold = 0.001
     print_status = False    # print status of the sub-fcms
@@ -335,23 +297,25 @@ if __name__ == "__main__":
     #lambda determina quanto il modello è sensibile ai cambiamenti dei AL
     #lamda grande -> più sensibile ai cambiamenti, tende a 0 o 1
     #lamda piccolo -> meno sensibile ai cambiamenti, tende a 0.5
-    lambdas = [0.79]
+    lambdas = {
+        1: 0.83,
+        2: 0.85,
+        3: 0.81,
+        4: 0.91,
+        5: 0.735
+    }
     colors = plot_sigmoid(lambdas)
 
-    res = {}
-    for lambda_value in lambdas:
-        models = []
-        for c in companies:
-            print(f"Algorithm: Papageorgiou, Lambda: {lambda_value}, Iterations: {iterations}, Company Type: {c}")
-            fcm_obj = FCM(n_fcm, iterations, c, flt)
-            fcm_obj.run_fcm(lambda_value, threshold)
-            fcm_obj.print_results(flt)
-            linguistic_al = flt.get_linguisitic_term(fcm_obj.final_activation_level)
-            print(f"Final activation level: {fcm_obj.final_activation_level} ({linguistic_al})")
-            if print_status:
-                fcm_obj.print_weights_nodes()
-            models.append(fcm_obj)
-            print("\n")
-        res[str(lambda_value)] = models
-    plot_al_values_graphs(res, companies, colors)
+    print(f"Algorithm: Papageorgiou, Iterations: {iterations}, Company Type: {company}")
+    fcm_obj = FCM(n_fcm, iterations, lambdas, company, flt, to_remove=to_remove)
+    fcm_obj.run_fcm(threshold)
+    fcm_obj.print_results(flt)
+    linguistic_al = flt.get_linguisitic_term(fcm_obj.main_final_al)
+    print(f"Final activation level: {fcm_obj.main_final_al} ({linguistic_al})")
+    if print_status:
+        fcm_obj.print_weights_nodes()
+    print("\n")
+
+    plot_al_values_graphs(fcm_obj, company, colors)
+
     plt.show()

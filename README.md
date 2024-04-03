@@ -75,20 +75,20 @@ python eval_structure.py
 ```
 
 #### FCM inference analysis
-In order to plot and run results of the FCM inference analyses:
+In order to run and plot results of the FCM inference analyses:
 ```shell
 cd evaluation
 python eval_fcm.py
 ```
-Results are also reported in this [notebook](evaluation/notebook_eval_fcm.ipynb).
+**N.B.** Results are also reported in this [notebook](evaluation/notebook_eval_fcm.ipynb).
 
 #### GA analysis
-In order to plot and run results of the GA analysis:
+In order to run and plot results of the GA analysis:
 ```shell
 cd evaluation
 python eval_ga.py
 ```
-This [pickle](evaluation/ga_results/results.pkl) file stores results shown in the article and this [notebook](evaluation/notebook_eval_ga.ipynb) reports the outcome.
+**N.B.** This [pickle](evaluation/ga_results/results.pkl) file stores results shown in the article and this [notebook](evaluation/notebook_eval_ga.ipynb) reports the outcome.
 
 ## License
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

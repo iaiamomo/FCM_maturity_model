@@ -374,7 +374,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors, algorithms, lambdas_va
             models_ = fcm_objs_[i]
             y_val = models_.final_al_mean
             plt.plot(list(range(len(y_val))), y_val, color=other_colors[j], label=f"M0 - λ {lambdas_lab[j-1]}")
-        plt.ylim(0, 1)
+        plt.ylim(0, 1.04)
         plt.grid()
         plt.xlabel("Iterations")
         plt.ylabel("Activation Level")

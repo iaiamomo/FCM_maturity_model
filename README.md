@@ -4,6 +4,31 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
 
 ![map](images/map.png)
 
+## Structure of the repository
+```
+.
+├── evaluation                      # sources for the evaluation
+|   ├── eval_structure.py           # evaluation of the structure
+|   ├── eval_fcm.py                 # evaluation of the FCM inference
+|   ├── notebook_eval_fcm.ipynb     # evaluation results of the FCM inference
+|   ├── eval_ga.py                  # evaluation of the GA algorithm
+|   ├── notebook_eval_ga.ipynb      # evaluation results of the GA algorithm
+|   └── ...
+├── model                           # sources of the FCM model
+|   └── ...
+├── cases                           # sources of the cases to be evaluated
+|   └──...
+├── utils
+|   ├── data                        # raw data to construct the model
+|   |   └──...
+|   └── single_FCM.py               # script to find the lambda of each FCM
+├── config.json                     # configuration file
+├── FCM_class.py                    # FCM class implementing inference
+├── GA_class.py                     # GA class implementing the genetic algorithm
+├── FLT_class.py                    # FLT class implementing the membership functions
+└── ...
+```
+
 
 ## Getting Started
 
@@ -65,7 +90,7 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
     To check the technologies linked to each node, have a look at the `.json` files in [model](model).
 - Put the files in the folder you created.
 
-### How to run the experiments
+## How to run the experiments
 
 #### Graph theory analyses
 In order to show results of the graph theory analyses:

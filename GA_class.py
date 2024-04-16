@@ -53,7 +53,7 @@ class Individual(object):
 # in this case the population is an evolving set of individuals (FCMs with different activation levels)
 class Population(object):
 
-    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low', to_remove=[]):
+    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low', to_remove=[], flt:FLT_class.Fuzzy_Linguistic_Terms=None):
         self.pop_size = pop_size
         self.individuals_size = individual_size
         self.crossover_prob = crossover_prob
@@ -65,6 +65,7 @@ class Population(object):
         self.elite = []
         self.to_remove = to_remove
         self.done = False
+        self.values = [flt.get_value(x) for x in flt.linguistic_terms.keys()][1:]
 
         # Create individuals
         self.individuals : list[Individual] = []
@@ -140,7 +141,7 @@ class Population(object):
             new_value = np.random.randint(1,10)/10
             old_value = x.genes[mutate_index]
             while new_value <= old_value:
-                new_value = np.random.randint(1,10)/10
+                new_value = random.choice(self.values)
                 if new_value == 0.9:
                     break
             x.genes[mutate_index] = new_value
@@ -201,7 +202,7 @@ class ALGA_class():
 
 
     # execute the what-if analysis of the FCM
-    def what_if(n_runs, pop_size, generation, retain, target_val, company_type, to_remove):
+    def what_if(n_runs, pop_size, generation, retain, target_val, company_type, to_remove, flt):
         # FCM parameters
         individual_size = ALGA_class.compute_individual_size(to_remove)
 
@@ -209,7 +210,7 @@ class ALGA_class():
         results_pop = []
         results_gen = []
         for k in range(n_runs):
-            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type, to_remove=to_remove)
+            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type, to_remove=to_remove, flt = flt)
 
             for x in range(generation):
                 pop.grade(generation = x)
@@ -281,7 +282,7 @@ if __name__ == "__main__":
 
     target_val = flt.get_value(target_val)
 
-    results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company, idx_to_remove)
+    results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company, idx_to_remove, flt)
 
     # from the results_pop array, get the best individual
     best_individuals = []

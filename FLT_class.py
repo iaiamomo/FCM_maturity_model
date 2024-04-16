@@ -101,5 +101,8 @@ def define_wm_fuzzy():
 
 if __name__ == "__main__":
     flt = define_al_fuzzy()
+    # extract values
+    res = [flt.get_value(x) for x in flt.linguistic_terms.keys()][1:]
+    print(res)
     res = flt.get_linguisitic_term(0.49)
     print(res)

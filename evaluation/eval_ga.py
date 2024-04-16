@@ -53,7 +53,7 @@ class Individual(object):
 # in this case the population is an evolving set of individuals (FCMs with different activation levels)
 class Population(object):
 
-    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low'):
+    def __init__(self, pop_size=10, crossover_prob=0.7, retain=5, target_val=0.6, individual_size = 30, company_type='low', flt:Fuzzy_Linguistic_Terms=None):
         self.pop_size = pop_size
         self.individuals_size = individual_size
         self.crossover_prob = crossover_prob
@@ -64,6 +64,7 @@ class Population(object):
         self.parents = []
         self.elite = []
         self.done = False
+        self.values = [flt.get_value(x) for x in flt.linguistic_terms.keys()][1:]
 
         # Create individuals
         self.individuals : list[Individual] = []
@@ -139,7 +140,7 @@ class Population(object):
             new_value = np.random.randint(1,10)/10
             old_value = x.genes[mutate_index]
             while new_value <= old_value:
-                new_value = np.random.randint(1,10)/10
+                new_value = np.random.choice(self.values)
                 if new_value == 0.9:
                     break
             x.genes[mutate_index] = new_value
@@ -199,7 +200,7 @@ class ALGA_class():
 
 
     # execute the what-if analysis of the FCM
-    def what_if(n_runs, pop_size, generation, retain, target_val, company_type):
+    def what_if(n_runs, pop_size, generation, retain, target_val, company_type, flt):
         # FCM parameters    
         individual_size = ALGA_class.compute_individual_size()
 
@@ -207,7 +208,7 @@ class ALGA_class():
         results_pop = []
         results_gen = []
         for k in range(n_runs):
-            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type)
+            pop = Population(pop_size=pop_size, retain=retain, target_val=target_val, individual_size=individual_size, company_type=company_type, flt=flt)
         
             for x in range(generation):
                 pop.grade(generation = x)
@@ -271,7 +272,7 @@ if __name__ == "__main__":
     for company_type in company_types:
         print(f"Running GA for {company_type} company type, crossover: {crossover_prob}, retain: {retain}")
         time_1 = time.time()
-        results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type)
+        results, results_pop, results_gen = ALGA_class.what_if(n_runs, pop_size, generation, retain, target_val, company_type, flt)
         time_2 = time.time()
         time_taken = time_2 - time_1
         print(f"Time taken: {time_taken} sec")

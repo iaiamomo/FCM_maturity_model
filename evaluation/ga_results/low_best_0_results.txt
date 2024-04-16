@@ -1,7 +1,7 @@
 FCM CAD, CAM, PLM
 	Node IIoT
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	VH
 	Node Cloud Services
 		Initial AL:	L
 		Final AL: 	VH
@@ -16,10 +16,10 @@ FCM CAD, CAM, PLM
 		Final AL: 	L
 	Node Digital Twin
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	H
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	L
 FCM CRM
 	Node IIoT
 		Initial AL:	L
@@ -29,16 +29,16 @@ FCM CRM
 		Final AL: 	VH
 	Node AI, CV, PM, RPA
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	H
 	Node Cyber Security
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	L
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	H
 FCM ERP, SCM
 	Node IIoT
 		Initial AL:	L
@@ -48,16 +48,16 @@ FCM ERP, SCM
 		Final AL: 	VH
 	Node AI, CV, PM, RPA
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	VH
 	Node Cyber Security
 		Initial AL:	L
 		Final AL: 	VH
 	Node Robotics
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	L
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	L
 	Node Digital Twin
 		Initial AL:	L
 		Final AL: 	L
@@ -67,38 +67,38 @@ FCM ERP, SCM
 FCM WMS, TMS
 	Node IIoT
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	M
 	Node Cloud Services
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	VH
 	Node AI, CV, PM, RPA
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 	Node Cyber Security
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	VH
 	Node Robotics
 		Initial AL:	L
 		Final AL: 	VH
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	H
 	Node Digital Twin
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	H
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	L
 FCM MES
 	Node IIoT
 		Initial AL:	L
-		Final AL: 	L
+		Final AL: 	VH
 	Node Cloud Services
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 	Node AI, CV, PM, RPA
 		Initial AL:	L
-		Final AL: 	H
+		Final AL: 	L
 	Node Cyber Security
 		Initial AL:	L
 		Final AL: 	H
@@ -107,10 +107,10 @@ FCM MES
 		Final AL: 	VH
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	L
 	Node Digital Twin
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	L
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	H

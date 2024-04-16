@@ -82,17 +82,17 @@ FCM WMS, TMS
 		Final AL: 	M
 	Node AR, VR
 		Initial AL:	L
-		Final AL: 	H
+		Final AL: 	VH
 	Node Digital Twin
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	VH
 	Node DM, BI
 		Initial AL:	L
 		Final AL: 	VH
 FCM MES
 	Node IIoT
 		Initial AL:	M
-		Final AL: 	VH
+		Final AL: 	M
 	Node Cloud Services
 		Initial AL:	VH
 		Final AL: 	VH
@@ -104,7 +104,7 @@ FCM MES
 		Final AL: 	M
 	Node Robotics
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 	Node AR, VR
 		Initial AL:	H
 		Final AL: 	H
@@ -113,4 +113,4 @@ FCM MES
 		Final AL: 	VH
 	Node DM, BI
 		Initial AL:	VL
-		Final AL: 	M
+		Final AL: 	VH

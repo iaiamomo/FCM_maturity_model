@@ -29,16 +29,16 @@ FCM CRM
 		Final AL: 	M
 	Node AI, CV, PM, RPA
 		Initial AL:	L
-		Final AL: 	VH
+		Final AL: 	H
 	Node Cyber Security
 		Initial AL:	L
-		Final AL: 	H
+		Final AL: 	VH
 	Node AR, VR
 		Initial AL:	L
 		Final AL: 	H
 	Node DM, BI
 		Initial AL:	M
-		Final AL: 	VH
+		Final AL: 	M
 FCM ERP, SCM
 	Node IIoT
 		Initial AL:	M
@@ -63,7 +63,7 @@ FCM ERP, SCM
 		Final AL: 	M
 	Node DM, BI
 		Initial AL:	L
-		Final AL: 	M
+		Final AL: 	H
 FCM WMS, TMS
 	Node IIoT
 		Initial AL:	M

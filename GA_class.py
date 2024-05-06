@@ -256,6 +256,43 @@ class ALGA_class():
         plt.title("Fitness of the population")
         plt.show(block=False)
 
+    @staticmethod
+    def find_differences(arr1, arr2):
+        indices = []
+
+        for i in range(len(arr1)):
+            if arr1[i] != arr2[i]:
+                indices.append(i)
+
+        num_diff_elements = len(indices)
+
+        return indices, num_diff_elements
+
+    @staticmethod
+    def find_best_individual(results, results_pop, idx_to_remove, n_fcm):
+        initial_values = []
+        for idx in range(1, n_fcm+1):
+            if idx in idx_to_remove:
+                continue
+            al = pd.read_csv(f'{cases_path}/{company}/{idx}_al.csv', header=None).values
+            for x in range(1, len(al)):
+                initial_values.append(flt.get_value(al[x][0]))
+
+        differences = {}
+        for i in range(n_runs):
+            indices, num_differences = ALGA_class.find_differences(initial_values, results[i])
+            differences[i] = (indices, num_differences)
+
+        for i in range(n_runs):
+            print(f"run {i+1}: {differences[i][1]} differences")
+
+        best_run = min(differences, key=lambda x: differences[x][1])
+        best_individuals = []
+        for i in range(n_runs):
+            if differences[i][x] == best_run:
+                best_individual.append(results_pop[i].individuals[0])
+
+        return max(best_individuals, key=lambda x: x.fitness_val)
 
 
 if __name__ == "__main__":
@@ -273,7 +310,7 @@ if __name__ == "__main__":
             idx_to_remove.append(i)
 
     # genetic algorithm parameters
-    n_runs = 5  # number of simulations
+    n_runs = 2  # number of simulations
     pop_size = 50   # number of individuals (FCM) in the population
     generation = 250    # number of generations
     crossover_prob = 0.7    # probability of crossover
@@ -313,5 +350,9 @@ if __name__ == "__main__":
 
     # visualize the results
     ALGA_class.visualize(results, results_pop, company)
+
+    # INDIVIDUATE THE BEST RUN HAVING THE LESS NUMBER OF DIFFERENCES
+    best_individual = ALGA_class.find_best_individual(results, results_pop, idx_to_remove, n_fcm)
+    print(f"Best individual: {best_individual.fitness_val}")
 
     plt.show()

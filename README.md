@@ -11,8 +11,6 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
 |   ├── eval_structure.py           # evaluation of the structure
 |   ├── eval_fcm.py                 # evaluation of the FCM inference
 |   ├── notebook_eval_fcm.ipynb     # evaluation results of the FCM inference
-|   ├── eval_ga.py                  # evaluation of the GA algorithm
-|   ├── notebook_eval_ga.ipynb      # evaluation results of the GA algorithm
 |   └── ...
 ├── model                           # sources of the FCM model
 |   └── ...
@@ -24,7 +22,6 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
 |   └── single_FCM.py               # script to find the lambda of each FCM
 ├── config.json                     # configuration file
 ├── FCM_class.py                    # FCM class implementing inference
-├── GA_class.py                     # GA class implementing the genetic algorithm
 ├── FLT_class.py                    # FLT class implementing the membership functions
 └── ...
 ```
@@ -69,10 +66,6 @@ Implementation of a FCM-based Maturity Model for Smart Manufacturing focusing on
     python FCM_class.py
     ```
 
-- To run what-if analysis (genetic algorithm):
-    ```shell
-    python GA_class.py
-    ```
 
 ### Define AL for a new case
 
@@ -107,13 +100,6 @@ python eval_fcm.py
 ```
 **N.B.** Results are also reported in this [notebook](evaluation/notebook_eval_fcm.ipynb).
 
-#### GA analysis
-In order to run and plot results of the GA analysis:
-```shell
-cd evaluation
-python eval_ga.py
-```
-**N.B.** This [pickle](evaluation/ga_results/results.pkl) file stores results shown in the article and this [notebook](evaluation/notebook_eval_ga.ipynb) reports the outcome.
 
 ## License
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

@@ -215,6 +215,8 @@ class FCM:
 
 def plot_al_values_graphs(models, company, colors):
     "Plot the activation levels of the main node of multiple FCM"
+    if "_" in company:
+        company = " ".join(company.split("_"))
     plt.figure()
     plt.grid()
     n_iter = 100

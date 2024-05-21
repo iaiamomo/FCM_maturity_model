@@ -368,7 +368,7 @@ def plot_al_values_graphs(fcms : dict, companies, colors, algorithms, lambdas_va
         for j in range(len(models.model_out)):
             fcm_j = models.model_out[j]
             plt.plot(list(range(len(fcm_j.nodes[0]['attr_dict']['value']))),fcm_j.nodes[0]['attr_dict']['value'], color=colors[j+1], linestyle='-.', label=f"FCM IT{j+1}")
-        plt.plot(list(range(len(all_y[comp_type][0]))), all_y[comp_type][0], color=colors[0], linewidth=2, label=f"M0 - λ mix")
+        plt.plot(list(range(len(all_y[comp_type][0]))), all_y[comp_type][0], color=colors[0], linewidth=2, label=f"M0 - λ opt")
         for j in range(1, len(lambdas_values)):
             fcm_objs_ = fcms[j]
             models_ = fcm_objs_[i]

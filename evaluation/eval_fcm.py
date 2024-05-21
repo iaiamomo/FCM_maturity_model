@@ -439,7 +439,7 @@ if __name__ == "__main__":
         }
     ]
     plot_sigmoid(lambdas_values[0])
-    companies = ["low", "high"]
+    companies = ["naive", "advanced"]
 
     res_algo = {}
     for algo in fcm_algorithm:

@@ -100,6 +100,21 @@ python eval_fcm.py
 ```
 **N.B.** Results are also reported in this [notebook](evaluation/notebook_eval_fcm.ipynb).
 
+## Case Study Results
+
+Final activation level of each IT system:
+```
+Algorithm: Papageorgiou, Iterations: 100, Company Type: case_study
+CAD, CAM, PLM (FCM1): 0.80205
+CRM (FCM2): 0.74365
+ERP, SCM (FCM3): 0.7686
+WMS, TMS (FCM4): 0.2622
+MES (FCM5): 0.72659
+Smart Manufacturing maturity level: 0.660618
+```
+
+![map](images/case_study.png)
+
 
 ## License
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

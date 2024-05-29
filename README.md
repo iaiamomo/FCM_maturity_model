@@ -115,6 +115,12 @@ Smart Manufacturing maturity level: 0.660618
 
 ![map](images/case_study.png)
 
+## Experts responses
+Responses of the experts are here available: [link](utils/data/responses/).
+
+## Final causal relationships
+Causal relationships resulting from the questionnaires are here available: [link](utils/data/).
+
 
 ## License
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

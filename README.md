@@ -107,7 +107,7 @@ In order to run and plot results of the GA analysis:
 cd evaluation
 python eval_ga.py
 ```
-**N.B.** This [pickle](evaluation/ga_results/results.pkl) file stores results shown in the article and this [notebook](evaluation/notebook_eval_ga.ipynb) reports the outcome.
+**N.B.** This [pickle](evaluation/ga_results/results.pkl) file stores results shown in the article and this [notebook](evaluation/notebook_eval_ga.ipynb) reports the outcome. The folder [ga_results](evaluation/ga_results) contains the values found by the GA.
 
 
 ## Case Study Results

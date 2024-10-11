@@ -100,6 +100,16 @@ python eval_fcm.py
 ```
 **N.B.** Results are also reported in this [notebook](evaluation/notebook_eval_fcm.ipynb).
 
+
+#### GA analysis
+In order to run and plot results of the GA analysis:
+```shell
+cd evaluation
+python eval_ga.py
+```
+**N.B.** This [pickle](evaluation/ga_results/results.pkl) file stores results shown in the article and this [notebook](evaluation/notebook_eval_ga.ipynb) reports the outcome.
+
+
 ## Case Study Results
 
 Final activation level of each IT system:

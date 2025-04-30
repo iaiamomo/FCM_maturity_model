@@ -30,7 +30,7 @@ class FCM:
         idx_new_values = 0
 
         self.idx_to_remove = []
-        desc_files = glob.glob(f"{model_path}/*.json")
+        desc_files = glob.glob(f"{model_path}/*desc.json")
         for i in range(len(desc_files)):
             file_to_open = desc_files[i]
             data = json.load(open(file_to_open))

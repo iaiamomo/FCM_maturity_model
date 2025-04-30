@@ -21,7 +21,7 @@ class StaticAnalysis:
 
         self.n_edges = {}    # n_edges = number of edges
         self.n_nodes = {}    # n_nodes = number of nodes
-        self.density = {}    # density = n_edges / n_nodes
+        self.density = {}    # density = n_edges / (n_nodes * (n_nodes - 1))
         for i in range(self.n_graphs):
             self.density[i] = round(nx.density(self.model[i]), 2)
             self.n_edges[i] = len(self.model[i].edges)
